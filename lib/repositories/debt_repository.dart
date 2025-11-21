@@ -18,6 +18,14 @@ class DebtRepository {
 
   Future<void> delete(String id) => _debts.delete(id);
 
+  Future<void> deleteCascade(String id) async {
+    final paymentsToDelete = _payments.values.where((payment) => payment.debtId == id).toList();
+    for (final payment in paymentsToDelete) {
+      await _payments.delete(payment.id);
+    }
+    await _debts.delete(id);
+  }
+
   Debt? find(String id) => _debts.get(id);
 
   Future<List<DebtPayment>> listPayments(String debtId) async =>

@@ -1,30 +1,89 @@
 import 'package:flutter/material.dart';
 
 import '../models/category_budget.dart';
+import '../utils/app_theme.dart';
+import '../utils/formatters.dart';
 
 class BudgetProgressWidget extends StatelessWidget {
   final CategoryBudget budget;
+  final String currencySymbol;
 
-  const BudgetProgressWidget({super.key, required this.budget});
+  const BudgetProgressWidget({
+    super.key,
+    required this.budget,
+    this.currencySymbol = '₹',
+  });
 
   @override
   Widget build(BuildContext context) {
     final percent = budget.limit == 0 ? 0.0 : (budget.spent / budget.limit).clamp(0.0, 2.0);
-    final color = percent >= 0.8 ? Colors.red : Colors.green;
+    final statusColor = _colorFor(percent, budget.warningThreshold);
+    final statusLabel = percent >= 1.0
+        ? 'Exceeded'
+        : percent >= budget.warningThreshold
+            ? 'Near limit'
+            : 'On track';
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Category: ${budget.categoryId}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    budget.categoryId,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: percent.clamp(0.0, 1.5),
+                minHeight: 10,
+                color: statusColor,
+                backgroundColor: Colors.grey.shade200,
+              ),
+            ),
             const SizedBox(height: 8),
-            LinearProgressIndicator(value: percent, color: color, backgroundColor: Colors.grey.shade200),
-            const SizedBox(height: 4),
-            Text('${budget.spent.toStringAsFixed(2)} / ${budget.limit.toStringAsFixed(2)}'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  formatCurrency(budget.spent, symbol: currencySymbol),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  'of ${formatCurrency(budget.limit, symbol: currencySymbol)}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Color _colorFor(double percent, double warningThreshold) {
+    if (percent >= 1.0) return AppTheme.danger;
+    if (percent >= warningThreshold) return AppTheme.warning;
+    return AppTheme.teal;
   }
 }

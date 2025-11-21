@@ -12,6 +12,13 @@ class BudgetRepository {
   List<CategoryBudget> listForMonth(String month) =>
       _box.values.where((budget) => budget.month == month).toList();
 
+  Stream<List<CategoryBudget>> watchForMonth(String month) async* {
+    yield listForMonth(month);
+    await for (final _ in _box.watch()) {
+      yield listForMonth(month);
+    }
+  }
+
   Future<void> upsert(CategoryBudget budget) => _box.put(budget.id, budget);
 
   Future<void> delete(String id) => _box.delete(id);
@@ -28,7 +35,7 @@ class BudgetRepository {
         spent: 0,
       ),
     );
-    budget.spent += delta;
+    budget.spent = (budget.spent + delta).clamp(0, double.infinity);
     await _box.put(budget.id, budget);
     return budget;
   }

@@ -16,6 +16,23 @@ class Setting extends HiveObject {
     required this.debtReminderDays,
     required this.lastExport,
   });
+
+  Setting copyWith({
+    String? currencySymbol,
+    bool? budgetWarningEnabled,
+    bool? budgetLimitEnabled,
+    int? debtReminderDays,
+    DateTime? lastExport,
+  }) {
+    return Setting(
+      id: id,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      budgetWarningEnabled: budgetWarningEnabled ?? this.budgetWarningEnabled,
+      budgetLimitEnabled: budgetLimitEnabled ?? this.budgetLimitEnabled,
+      debtReminderDays: debtReminderDays ?? this.debtReminderDays,
+      lastExport: lastExport ?? this.lastExport,
+    );
+  }
 }
 
 class SettingAdapter extends TypeAdapter<Setting> {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/category_budget.dart';
@@ -7,19 +9,34 @@ import 'repository_providers.dart';
 
 class BudgetNotifier extends StateNotifier<List<CategoryBudget>> {
   final BudgetRepository _repository;
+  StreamSubscription? _subscription;
+  String _currentMonth = monthKey(DateTime.now());
 
   BudgetNotifier(this._repository) : super([]) {
-    refresh();
+    _listenToMonth(_currentMonth);
+  }
+
+  void _listenToMonth(String month) {
+    _subscription?.cancel();
+    _subscription = _repository.watchForMonth(month).listen((budgets) {
+      state = budgets;
+    });
   }
 
   void refresh({DateTime? reference}) {
     final month = monthKey(reference ?? DateTime.now());
-    state = _repository.listForMonth(month);
+    _currentMonth = month;
+    _listenToMonth(month);
   }
 
   Future<void> update(CategoryBudget budget) async {
     await _repository.upsert(budget);
-    refresh();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
 

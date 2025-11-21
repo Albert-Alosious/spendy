@@ -1,8 +1,14 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/finance_transaction.dart';
+import '../providers/repository_providers.dart';
+import '../providers/setting_provider.dart';
 import '../providers/stream_providers.dart';
+import '../screens/add_edit_transaction_screen.dart';
+import '../utils/app_theme.dart';
+import '../utils/formatters.dart';
 
 class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
@@ -21,36 +27,76 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   @override
   Widget build(BuildContext context) {
     final transactionsAsync = ref.watch(transactionStreamProvider);
+    final settings = ref.watch(settingProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _openAdd(),
+        child: const Icon(Icons.add_rounded),
+      ),
       body: transactionsAsync.when(
         data: (transactions) {
-          final filtered = transactions.where((txn) {
-            final matchesType = filterType == null || txn.type == filterType;
-            final matchesSearch = search.isEmpty || txn.note?.toLowerCase().contains(search.toLowerCase()) == true;
-            final matchesCategory = categoryFilter.isEmpty || (txn.categoryId?.toLowerCase().contains(categoryFilter.toLowerCase()) == true);
-            final matchesAccount = accountFilter.isEmpty || ((txn.fromAccountId?.toLowerCase().contains(accountFilter.toLowerCase()) == true) || (txn.toAccountId?.toLowerCase().contains(accountFilter.toLowerCase()) == true));
-            final matchesDate = dateRange == null || (txn.date.isAfter(dateRange!.start.subtract(const Duration(seconds: 1))) && txn.date.isBefore(dateRange!.end.add(const Duration(seconds: 1))));
-            return matchesType && matchesSearch && matchesCategory && matchesAccount && matchesDate;
-          }).toList();
+          final filtered = _applyFilters(transactions);
+          if (filtered.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.receipt_long_outlined, size: 48, color: AppTheme.primary),
+                    const SizedBox(height: 12),
+                    const Text('No transactions match your filters.'),
+                    TextButton(onPressed: _resetFilters, child: const Text('Clear filters')),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final grouped = groupBy(
+            filtered,
+            (txn) => DateTime(txn.date.year, txn.date.month, txn.date.day),
+          );
+          final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
           return Column(
             children: [
               _buildFilters(),
               Expanded(
                 child: ListView.builder(
-                  itemCount: filtered.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: sortedDates.length,
                   itemBuilder: (context, index) {
-                    final txn = filtered[index];
-                    return ListTile(
-                      title: Text(txn.note ?? 'Transaction ${txn.id}'),
-                      subtitle: Text('${txn.amount.toStringAsFixed(2)} • ${txn.date.toLocal()}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(onPressed: () {}, icon: const Icon(Icons.edit)),
-                          IconButton(onPressed: () {}, icon: const Icon(Icons.delete)),
-                        ],
-                      ),
+                    final day = sortedDates[index];
+                    final txns = grouped[day] ?? [];
+                    final dayTotal = txns.fold<double>(
+                      0,
+                      (prev, txn) => prev + (txn.type == TransactionType.expense ? -txn.amount : txn.amount),
+                    );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              formatShortDate(day),
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              formatCurrency(dayTotal, symbol: settings.currencySymbol),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: dayTotal >= 0 ? AppTheme.success : AppTheme.danger,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ...txns.map((txn) => _transactionCard(context, txn, settings.currencySymbol)),
+                        const SizedBox(height: 12),
+                      ],
                     );
                   },
                 ),
@@ -64,55 +110,154 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     );
   }
 
+  List<FinanceTransaction> _applyFilters(List<FinanceTransaction> transactions) {
+    return transactions.where((txn) {
+      final matchesType = filterType == null || txn.type == filterType;
+      final matchesSearch = search.isEmpty || txn.note?.toLowerCase().contains(search.toLowerCase()) == true;
+      final matchesCategory =
+          categoryFilter.isEmpty || (txn.categoryId?.toLowerCase().contains(categoryFilter.toLowerCase()) == true);
+      final matchesAccount = accountFilter.isEmpty ||
+          ((txn.fromAccountId?.toLowerCase().contains(accountFilter.toLowerCase()) == true) ||
+              (txn.toAccountId?.toLowerCase().contains(accountFilter.toLowerCase()) == true));
+      final matchesDate = dateRange == null ||
+          (txn.date.isAfter(dateRange!.start.subtract(const Duration(seconds: 1))) &&
+              txn.date.isBefore(dateRange!.end.add(const Duration(seconds: 1))));
+      return matchesType && matchesSearch && matchesCategory && matchesAccount && matchesDate;
+    }).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
   Widget _buildFilters() {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          TextField(
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search),
+              hintText: 'Search description or note',
+            ),
+            onChanged: (value) => setState(() => search = value),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search notes'),
-                  onChanged: (value) => setState(() => search = value),
+              ChoiceChip(
+                label: const Text('All'),
+                selected: filterType == null,
+                onSelected: (_) => setState(() => filterType = null),
+              ),
+              ...TransactionType.values.map(
+                (type) => ChoiceChip(
+                  label: Text(type.name.capitalize()),
+                  selected: filterType == type,
+                  onSelected: (_) => setState(() => filterType = type),
                 ),
               ),
-              const SizedBox(width: 8),
-              DropdownButton<TransactionType>(
-                value: filterType,
-                hint: const Text('Type'),
-                items: [null, ...TransactionType.values].map((type) {
-                  return DropdownMenuItem<TransactionType>(
-                    value: type,
-                    child: Text(type == null ? 'All' : type.name.capitalize()),
-                  );
-                }).toList(),
-                onChanged: (value) => setState(() => filterType = value),
+              FilterChip(
+                label: Text(dateRange == null
+                    ? 'Any date'
+                    : '${formatShortDate(dateRange!.start)} — ${formatShortDate(dateRange!.end)}'),
+                selected: dateRange != null,
+                onSelected: (_) => _pickRange(),
               ),
-            ],
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: 'Category filter'),
-            onChanged: (value) => setState(() => categoryFilter = value),
-          ),
-          TextField(
-            decoration: const InputDecoration(labelText: 'Account filter'),
-            onChanged: (value) => setState(() => accountFilter = value),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(dateRange == null
-                    ? 'All dates'
-                    : '${dateRange!.start.toLocal().toShortDate()} — ${dateRange!.end.toLocal().toShortDate()}'),
+              FilterChip(
+                label: Text(categoryFilter.isEmpty ? 'Category' : categoryFilter),
+                selected: categoryFilter.isNotEmpty,
+                onSelected: (_) => _promptText('Filter by category', (value) => setState(() => categoryFilter = value)),
               ),
-              TextButton(onPressed: _pickRange, child: const Text('Date range')),
+              FilterChip(
+                label: Text(accountFilter.isEmpty ? 'Account' : accountFilter),
+                selected: accountFilter.isNotEmpty,
+                onSelected: (_) => _promptText('Filter by account', (value) => setState(() => accountFilter = value)),
+              ),
+              TextButton(onPressed: _resetFilters, child: const Text('Clear')),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _transactionCard(BuildContext context, FinanceTransaction txn, String currencySymbol) {
+    final isExpense = txn.type == TransactionType.expense;
+    final color = isExpense ? AppTheme.danger : AppTheme.success;
+    final amountPrefix = isExpense ? '-' : '+';
+    return Card(
+      child: ListTile(
+        onTap: () => _openEdit(txn),
+        title: Text(
+          txn.note?.isNotEmpty == true ? txn.note! : (txn.categoryId ?? 'Transaction'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${txn.categoryId ?? 'Uncategorized'} • ${formatDateTime(txn.date)}',
+              style: TextStyle(color: Colors.grey.shade700),
+            ),
+            if (txn.fromAccountId != null || txn.toAccountId != null)
+              Text(
+                [txn.fromAccountId, txn.toAccountId].whereType<String>().join('  ·  '),
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+          ],
+        ),
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.12),
+          child: Icon(_iconForCategory(txn.categoryId), color: color),
+        ),
+        trailing: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '$amountPrefix ${formatCurrency(txn.amount, symbol: currencySymbol)}',
+              style: TextStyle(color: color, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            IconButton(
+              onPressed: () => _delete(txn),
+              icon: const Icon(Icons.delete_outline_rounded, size: 20),
+              color: Colors.grey.shade600,
+              tooltip: 'Delete',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _iconForCategory(String? category) {
+    if (category == null || category.isEmpty) return Icons.wallet_rounded;
+    final key = category.toLowerCase();
+    if (key.contains('food') || key.contains('grocery')) return Icons.restaurant_rounded;
+    if (key.contains('travel') || key.contains('uber') || key.contains('taxi')) return Icons.directions_bus_rounded;
+    if (key.contains('rent') || key.contains('home')) return Icons.home_rounded;
+    if (key.contains('shopping')) return Icons.shopping_bag_rounded;
+    if (key.contains('salary') || key.contains('pay')) return Icons.payments_rounded;
+    if (key.contains('health') || key.contains('med')) return Icons.health_and_safety_rounded;
+    if (key.contains('entertainment') || key.contains('movie')) return Icons.theaters_rounded;
+    return Icons.label_rounded;
+  }
+
+  Future<void> _delete(FinanceTransaction txn) async {
+    await ref.read(transactionRepositoryProvider).delete(txn.id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction deleted')));
+    }
+  }
+
+  void _resetFilters() {
+    setState(() {
+      search = '';
+      filterType = null;
+      categoryFilter = '';
+      accountFilter = '';
+      dateRange = null;
+    });
   }
 
   Future<void> _pickRange() async {
@@ -126,12 +271,42 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       setState(() => dateRange = pickedRange);
     }
   }
+
+  Future<void> _promptText(String label, ValueChanged<String> onSave) async {
+    final controller = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(label),
+        content: TextField(controller: controller, decoration: InputDecoration(labelText: label)),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              onSave(controller.text);
+              Navigator.of(dialogContext).pop();
+              setState(() {});
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openAdd() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddEditTransactionScreen()));
+  }
+
+  Future<void> _openEdit(FinanceTransaction txn) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AddEditTransactionScreen(existing: txn),
+      ),
+    );
+  }
 }
 
 extension on String {
   String capitalize() => isEmpty ? this : '${this[0].toUpperCase()}${substring(1)}';
-}
-
-extension DateShort on DateTime {
-  String toShortDate() => '${year}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 }

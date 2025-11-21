@@ -14,14 +14,10 @@ class SettingRepository {
 
   Future<void> updateCurrency(String symbol) async {
     final setting = current;
-    await _settings.put(setting.id, Setting(
-      id: setting.id,
-      currencySymbol: symbol,
-      budgetWarningEnabled: setting.budgetWarningEnabled,
-      budgetLimitEnabled: setting.budgetLimitEnabled,
-      debtReminderDays: setting.debtReminderDays,
-      lastExport: setting.lastExport,
-    ));
+    await _settings.put(
+      setting.id,
+      setting.copyWith(currencySymbol: symbol, lastExport: DateTime.now()),
+    );
   }
 
   Future<Map<String, dynamic>> exportAsJson() async => {
@@ -33,19 +29,21 @@ class SettingRepository {
 
   Future<void> importFromJson(Map<String, dynamic> json) async {
     final existing = current;
-    await _settings.put(existing.id, Setting(
-      id: existing.id,
-      currencySymbol: json['currencySymbol'] as String,
-      budgetWarningEnabled: json['budgetWarningEnabled'] as bool,
-      budgetLimitEnabled: json['budgetLimitEnabled'] as bool,
-      debtReminderDays: json['debtReminderDays'] as int,
-      lastExport: DateTime.now(),
-    ));
+    await _settings.put(
+      existing.id,
+      existing.copyWith(
+        currencySymbol: json['currencySymbol'] as String? ?? existing.currencySymbol,
+        budgetWarningEnabled: json['budgetWarningEnabled'] as bool? ?? existing.budgetWarningEnabled,
+        budgetLimitEnabled: json['budgetLimitEnabled'] as bool? ?? existing.budgetLimitEnabled,
+        debtReminderDays: json['debtReminderDays'] as int? ?? existing.debtReminderDays,
+        lastExport: DateTime.now(),
+      ),
+    );
   }
 
   Setting _defaultSetting() => Setting(
         id: 'settings',
-        currencySymbol: '\$',
+        currencySymbol: '₹',
         budgetWarningEnabled: true,
         budgetLimitEnabled: true,
         debtReminderDays: 7,

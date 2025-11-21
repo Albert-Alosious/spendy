@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/debt.dart';
 import '../models/debt_payment.dart';
+import '../models/finance_transaction.dart';
 import '../repositories/debt_repository.dart';
 import 'repository_providers.dart';
 
@@ -21,9 +22,15 @@ class DebtNotifier extends StateNotifier<List<Debt>> {
     refresh();
   }
 
-  Future<void> repay(DebtPayment payment) async {
-    await _repository.addPayment(payment);
+  Future<void> removeDebt(String id) async {
+    await _repository.deleteCascade(id);
     refresh();
+  }
+
+  Future<FinanceTransaction> repay(DebtPayment payment) async {
+    final transaction = await _repository.addPayment(payment);
+    refresh();
+    return transaction;
   }
 }
 
