@@ -61,11 +61,11 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SpendWiser',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.light,
-      themeMode: ThemeMode.light,
+      theme: AppTheme.dark,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       home: Scaffold(
-        backgroundColor: AppTheme.light.scaffoldBackgroundColor,
+        backgroundColor: AppTheme.dark.scaffoldBackgroundColor,
         body: IndexedStack(
           index: _contentIndex,
           children: _contentScreens,
@@ -76,47 +76,51 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
   }
 
   Widget _buildBottomNav(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 12,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _navIndex,
-        onTap: (index) => _onNavTap(context, index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedItemColor: AppTheme.accentTeal,
-        unselectedItemColor: AppTheme.textSecondary,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Transactions'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_rounded, size: 32), label: 'Add'),
-          BottomNavigationBarItem(icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
-          BottomNavigationBarItem(icon: Icon(Icons.handshake_rounded), label: 'Lend/Borrow'),
-        ],
+          child: BottomNavigationBar(
+            currentIndex: _navIndex,
+            onTap: (index) => _onNavTap(context, index),
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: AppTheme.accentTeal,
+            unselectedItemColor: const Color.fromARGB(179, 168, 166, 166),
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard_rounded), label: 'Home'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long_rounded),
+                  label: 'Transactions'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.handshake_rounded), label: 'Lend/Borrow'),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Future<void> _onNavTap(BuildContext context, int index) async {
-    if (index == 2) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const AddEditTransactionScreen()),
-      );
-      return;
-    }
     setState(() {
       _navIndex = index;
-      _contentIndex = index > 2 ? index - 1 : index;
+      _contentIndex = index;
     });
   }
 }

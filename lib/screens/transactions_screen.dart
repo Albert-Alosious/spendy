@@ -210,21 +210,26 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
           backgroundColor: color.withOpacity(0.12),
           child: Icon(_iconForCategory(txn.categoryId), color: color),
         ),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '$amountPrefix ${formatCurrency(txn.amount, symbol: currencySymbol)}',
-              style: TextStyle(color: color, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 4),
-            IconButton(
-              onPressed: () => _delete(txn),
-              icon: const Icon(Icons.delete_outline_rounded, size: 20),
-              color: Colors.grey.shade600,
-              tooltip: 'Delete',
-            ),
-          ],
+        trailing: SizedBox(
+          height: 56,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$amountPrefix ${formatCurrency(txn.amount, symbol: currencySymbol)}',
+                style: TextStyle(color: color, fontWeight: FontWeight.w800),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minHeight: 32, minWidth: 32),
+                onPressed: () => _delete(txn),
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                color: Colors.grey.shade600,
+                tooltip: 'Delete',
+              ),
+            ],
+          ),
         ),
       ),
     );
