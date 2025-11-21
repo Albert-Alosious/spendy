@@ -115,12 +115,12 @@ class BudgetsScreen extends ConsumerWidget {
             Row(
               children: [
                 _pill(
-                  color: exceeded > 0 ? AppTheme.danger : AppTheme.teal,
+                  color: exceeded > 0 ? AppTheme.danger : AppTheme.accentTeal,
                   label: 'Exceeded: $exceeded',
                 ),
                 const SizedBox(width: 8),
                 _pill(
-                  color: nearLimit > 0 ? AppTheme.warning : AppTheme.teal,
+                  color: nearLimit > 0 ? AppTheme.warning : AppTheme.accentTeal,
                   label: 'Near limit: $nearLimit',
                 ),
               ],

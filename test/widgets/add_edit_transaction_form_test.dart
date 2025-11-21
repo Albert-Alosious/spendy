@@ -17,7 +17,13 @@ class FakeTransactionRepository implements TransactionRepository {
   Stream<List<FinanceTransaction>> watchAll() => Stream.value(saved);
 
   @override
-  Future<void> addTransaction(FinanceTransaction transaction) async => saved.add(transaction);
+  Future<void> addTransaction(FinanceTransaction transaction) async => saveTransaction(transaction);
+
+  @override
+  Future<void> saveTransaction(FinanceTransaction transaction, {FinanceTransaction? previous}) async {
+    saved.removeWhere((txn) => txn.id == transaction.id);
+    saved.add(transaction);
+  }
 
   @override
   Future<void> delete(String id) async => saved.removeWhere((txn) => txn.id == id);

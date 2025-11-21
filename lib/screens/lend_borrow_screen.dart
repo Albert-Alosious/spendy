@@ -78,7 +78,7 @@ class LendBorrowScreen extends ConsumerWidget {
         final debt = debts[index];
         final status = _statusLabel(debt);
         final color = debt.balance <= 0
-            ? AppTheme.teal
+            ? AppTheme.warning
             : direction == DebtDirection.lend
                 ? AppTheme.success
                 : AppTheme.danger;

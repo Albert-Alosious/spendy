@@ -58,7 +58,7 @@ class BudgetProgressWidget extends StatelessWidget {
                 value: percent.clamp(0.0, 1.5),
                 minHeight: 10,
                 color: statusColor,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Colors.white10,
               ),
             ),
             const SizedBox(height: 8),

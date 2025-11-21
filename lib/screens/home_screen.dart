@@ -74,28 +74,27 @@ class HomeScreen extends ConsumerWidget {
               ref.read(debtNotifierProvider.notifier).refresh();
             },
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
-                const SizedBox(height: 8),
-                Text(
-                  'This month',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
+                _heroCard(context, settings.currencySymbol, incomeTotal, expenseTotal, net),
+                const SizedBox(height: 18),
+                _glanceRow(
+                  context,
+                  nearLimitBudgets.length.toDouble(),
+                  exceededBudgets.length.toDouble(),
+                  borrowTotal,
+                  lendTotal,
+                  settings.currencySymbol,
                 ),
-                const SizedBox(height: 8),
-                _buildSummaryRow(context, settings.currencySymbol, expenseTotal, incomeTotal, net),
-                const SizedBox(height: 16),
-                _buildBudgetNotice(context, nearLimitBudgets, exceededBudgets),
-                _buildBudgets(context, budgets, settings.currencySymbol),
-                const SizedBox(height: 12),
-                _buildSpendingChart(context, categorySpend, settings.currencySymbol),
-                const SizedBox(height: 12),
-                _buildDebtSummary(context, settings.currencySymbol, lendTotal, borrowTotal),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
                 _buildQuickActions(context),
-                const SizedBox(height: 32),
+                const SizedBox(height: 18),
+                _buildBudgets(context, budgets, settings.currencySymbol),
+                const SizedBox(height: 18),
+                _buildSpendingChart(context, categorySpend, settings.currencySymbol),
+                const SizedBox(height: 18),
+                _buildDebtSummary(context, settings.currencySymbol, lendTotal, borrowTotal),
+                const SizedBox(height: 28),
               ],
             ),
           );
@@ -113,6 +112,51 @@ class HomeScreen extends ConsumerWidget {
         txns.fold<double>(0, (prev, txn) => prev + txn.amount)));
   }
 
+  Widget _heroCard(
+    BuildContext context,
+    String currencySymbol,
+    double income,
+    double expense,
+    double net,
+  ) {
+    // Reuse the summary builder; parameters expected as (expense, income, net).
+    return _buildSummaryRow(context, currencySymbol, expense, income, net);
+  }
+
+  Widget _glanceRow(
+    BuildContext context,
+    double nearLimit,
+    double exceeded,
+    double borrowTotal,
+    double lendTotal,
+    String currencySymbol,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: _metricCard(
+            context,
+            title: 'Budgets',
+            value: '${nearLimit.toInt()} near · ${exceeded.toInt()} over',
+            color: AppTheme.accentTeal,
+            icon: Icons.flag_rounded,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _metricCard(
+            context,
+            title: 'Debts',
+            value:
+                '${formatCurrency(lendTotal, symbol: currencySymbol)} owed · ${formatCurrency(borrowTotal, symbol: currencySymbol)} due',
+            color: AppTheme.accentPink,
+            icon: Icons.handshake_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSummaryRow(
     BuildContext context,
     String currencySymbol,
@@ -121,38 +165,87 @@ class HomeScreen extends ConsumerWidget {
     double net,
   ) {
     final netColor = net >= 0 ? AppTheme.success : AppTheme.danger;
-    return Row(
-      children: [
-        Expanded(
-          child: _metricCard(
-            context,
-            title: 'Income',
-            value: formatCurrency(income, symbol: currencySymbol),
-            color: AppTheme.teal,
-            icon: Icons.arrow_upward_rounded,
-          ),
+    final spentRatio = (income == 0 ? 0 : (expense / income)).clamp(0.0, 1.0);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.accentCyan, AppTheme.accentPink],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _metricCard(
-            context,
-            title: 'Expense',
-            value: formatCurrency(expense, symbol: currencySymbol),
-            color: AppTheme.primary,
-            icon: Icons.arrow_downward_rounded,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'This month',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  formatCurrency(net, symbol: currencySymbol),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 28,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.arrow_upward_rounded, size: 18, color: Colors.black87),
+                    const SizedBox(width: 6),
+                    Text(formatCurrency(income, symbol: currencySymbol), style: const TextStyle(color: Colors.black87)),
+                    const SizedBox(width: 12),
+                    Icon(Icons.arrow_downward_rounded, size: 18, color: Colors.black87),
+                    const SizedBox(width: 6),
+                    Text(formatCurrency(expense, symbol: currencySymbol), style: const TextStyle(color: Colors.black87)),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _metricCard(
-            context,
-            title: 'Net',
-            value: formatCurrency(net, symbol: currencySymbol),
-            color: netColor,
-            icon: Icons.account_balance_wallet_rounded,
+          SizedBox(
+            width: 120,
+            height: 120,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: CircularProgressIndicator(
+                    value: spentRatio.toDouble(),
+                    strokeWidth: 10,
+                    backgroundColor: Colors.white24,
+                    valueColor: AlwaysStoppedAnimation<Color>(netColor),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Spent', style: TextStyle(color: Colors.black.withOpacity(0.7), fontWeight: FontWeight.w600)),
+                    Text('${(spentRatio * 100).clamp(0, 999).toStringAsFixed(0)}%',
+                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 18)),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -179,7 +272,7 @@ class HomeScreen extends ConsumerWidget {
                   child: Text(
                     title,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.grey.shade600),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white60),
                   ),
                 ),
               ],
@@ -249,8 +342,8 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppTheme.teal.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.flag_rounded, color: AppTheme.teal),
+                decoration: BoxDecoration(color: AppTheme.accentTeal.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.flag_rounded, color: AppTheme.accentTeal),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -335,13 +428,13 @@ class HomeScreen extends ConsumerWidget {
 
   List<PieChartSectionData> _pieSections(Map<String, double> data) {
     final colors = [
-      AppTheme.primary,
-      AppTheme.teal,
+      AppTheme.accentTeal,
+      AppTheme.accentCyan,
+      AppTheme.accentPink,
       AppTheme.warning,
-      AppTheme.danger,
-      const Color(0xFF8E24AA),
-      const Color(0xFF3949AB),
-      const Color(0xFF00ACC1),
+      const Color(0xFF9FA8DA),
+      const Color(0xFF80CBC4),
+      const Color(0xFFF48FB1),
     ];
     var index = 0;
     return data.entries.map((entry) {
@@ -360,45 +453,59 @@ class HomeScreen extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('People owe you', style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    formatCurrency(lendTotal, symbol: currencySymbol),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.success,
-                        ),
-                  ),
-                ],
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.accentCyan, AppTheme.accentTeal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 8))],
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('People owe you', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black87)),
+                const SizedBox(height: 8),
+                Text(
+                  formatCurrency(lendTotal, symbol: currencySymbol),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('You owe others', style: Theme.of(context).textTheme.labelLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    formatCurrency(borrowTotal, symbol: currencySymbol),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.danger,
-                        ),
-                  ),
-                ],
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.accentPink, AppTheme.warning],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
               ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 8))],
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('You owe others', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black87)),
+                const SizedBox(height: 8),
+                Text(
+                  formatCurrency(borrowTotal, symbol: currencySymbol),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                ),
+              ],
             ),
           ),
         ),
@@ -407,34 +514,36 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        _quickAction(
-          context,
-          label: 'Log expense',
-          icon: Icons.remove_circle_outline_rounded,
-          color: AppTheme.primary,
-          onTap: () => _openAdd(context, TransactionType.expense),
-        ),
-        _quickAction(
-          context,
-          label: 'Add income',
-          icon: Icons.add_circle_outline_rounded,
-          color: AppTheme.teal,
-          onTap: () => _openAdd(context, TransactionType.income),
-        ),
-        _quickAction(
-          context,
-          label: 'Add debt',
-          icon: Icons.handshake_rounded,
-          color: AppTheme.warning,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LendBorrowScreen()),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          _quickAction(
+            context,
+            label: 'Log expense',
+            icon: Icons.remove_circle_outline_rounded,
+            color: AppTheme.accentPink,
+            onTap: () => _openAdd(context, TransactionType.expense),
           ),
-        ),
-      ],
+          _quickAction(
+            context,
+            label: 'Add income',
+            icon: Icons.add_circle_outline_rounded,
+            color: AppTheme.accentTeal,
+            onTap: () => _openAdd(context, TransactionType.income),
+          ),
+          _quickAction(
+            context,
+            label: 'Add debt',
+            icon: Icons.handshake_rounded,
+            color: AppTheme.accentAmber,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const LendBorrowScreen()),
+            ),
+          ),
+        ].map((w) => Padding(padding: const EdgeInsets.only(right: 12), child: w)).toList(),
+      ),
     );
   }
 
@@ -443,22 +552,38 @@ class HomeScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: (MediaQuery.of(context).size.width - 48) / 2,
-        padding: const EdgeInsets.all(14),
+        width: 200,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.16)),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.9), color.withOpacity(0.6)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(color: color.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 8)),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Colors.black87),
+            ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
                 label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: color),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
               ),
             ),
           ],

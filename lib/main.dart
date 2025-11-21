@@ -61,9 +61,11 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SpendWiser',
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       home: Scaffold(
-        backgroundColor: AppTheme.light.scaffoldBackgroundColor,
+        backgroundColor: AppTheme.dark.scaffoldBackgroundColor,
         body: IndexedStack(
           index: _contentIndex,
           children: _contentScreens,
@@ -77,10 +79,10 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -92,8 +94,8 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: scheme.primary,
-        unselectedItemColor: scheme.onSurface.withOpacity(0.5),
+        selectedItemColor: AppTheme.accentTeal,
+        unselectedItemColor: Colors.white54,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Transactions'),
