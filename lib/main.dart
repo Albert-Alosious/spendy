@@ -95,7 +95,7 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         selectedItemColor: AppTheme.accentTeal,
-        unselectedItemColor: Colors.white54,
+        unselectedItemColor: AppTheme.textSecondary,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt_long_rounded), label: 'Transactions'),
