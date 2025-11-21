@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/category.dart';
 import '../models/finance_transaction.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
@@ -23,6 +24,18 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String categoryFilter = '';
   String accountFilter = '';
   DateTimeRange? dateRange;
+  String? selectedCategoryId;
+  static final _defaultCategories = <Category>[
+    Category(id: 'food', name: 'Food & Dining', colorHex: '#F59E0B', icon: 'restaurant', isExpense: true),
+    Category(id: 'transport', name: 'Transport', colorHex: '#0EA5E9', icon: 'directions_bus', isExpense: true),
+    Category(id: 'groceries', name: 'Groceries', colorHex: '#10B981', icon: 'shopping_basket', isExpense: true),
+    Category(id: 'rent', name: 'Rent', colorHex: '#6366F1', icon: 'home', isExpense: true),
+    Category(id: 'utilities', name: 'Utilities', colorHex: '#F97316', icon: 'bolt', isExpense: true),
+    Category(id: 'entertainment', name: 'Entertainment', colorHex: '#EC4899', icon: 'theaters', isExpense: true),
+    Category(id: 'shopping', name: 'Shopping', colorHex: '#E11D48', icon: 'shopping_bag', isExpense: true),
+    Category(id: 'health', name: 'Health', colorHex: '#22D3EE', icon: 'health_and_safety', isExpense: true),
+    Category(id: 'income', name: 'Income', colorHex: '#10B981', icon: 'payments', isExpense: false),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +141,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   Widget _buildFilters() {
+    final repoCategories = ref.watch(categoryRepositoryProvider).all;
+    final categories = repoCategories.isNotEmpty ? repoCategories : _defaultCategories;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Column(
@@ -163,10 +178,29 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 selected: dateRange != null,
                 onSelected: (_) => _pickRange(),
               ),
-              FilterChip(
-                label: Text(categoryFilter.isEmpty ? 'Category' : categoryFilter),
-                selected: categoryFilter.isNotEmpty,
-                onSelected: (_) => _promptText('Filter by category', (value) => setState(() => categoryFilter = value)),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: selectedCategoryId,
+                  hint: const Text('Category'),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('All categories'),
+                    ),
+                    ...categories.map(
+                      (cat) => DropdownMenuItem(
+                        value: cat.id,
+                        child: Text(cat.name),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCategoryId = value;
+                      categoryFilter = value ?? '';
+                    });
+                  },
+                ),
               ),
               FilterChip(
                 label: Text(accountFilter.isEmpty ? 'Account' : accountFilter),

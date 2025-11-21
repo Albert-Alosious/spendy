@@ -23,18 +23,19 @@ class BudgetRepository {
 
   Future<void> delete(String id) => _box.delete(id);
 
-  Future<CategoryBudget> adjustSpent(String categoryId, String month, double delta) async {
+  Future<CategoryBudget?> adjustSpent(String categoryId, String month, double delta) async {
     final budget = _box.values.firstWhere(
       (b) => b.categoryId == categoryId && b.month == month,
       orElse: () => CategoryBudget(
-        id: '$categoryId-$month',
-        categoryId: categoryId,
-        month: month,
+        id: '',
+        categoryId: '',
+        month: '',
         limit: 0,
         warningThreshold: 0,
         spent: 0,
       ),
     );
+    if (budget.id.isEmpty) return null;
     budget.spent = (budget.spent + delta).clamp(0, double.infinity);
     await _box.put(budget.id, budget);
     return budget;

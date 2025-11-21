@@ -61,7 +61,7 @@ class TransactionRepository {
         monthKey(transaction.date),
         transaction.amount * direction,
       );
-      if (notifyBudget && direction > 0) {
+      if (budget != null && notifyBudget && direction > 0) {
         _notificationService.maybeNotifyBudgetThreshold(budget);
       }
     }
