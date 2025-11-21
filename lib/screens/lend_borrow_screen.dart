@@ -26,6 +26,8 @@ class LendBorrowScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Lend / Borrow'),
           bottom: const TabBar(
+            labelColor: Colors.black,
+            unselectedLabelColor: Colors.black54,
             tabs: [
               Tab(text: 'Lent'),
               Tab(text: 'Borrowed'),

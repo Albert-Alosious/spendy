@@ -16,7 +16,8 @@ class BudgetProgressWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percent = budget.limit == 0 ? 0.0 : (budget.spent / budget.limit).clamp(0.0, 2.0);
+    final percent =
+        budget.limit == 0 ? 0.0 : (budget.spent / budget.limit).clamp(0.0, 2.0);
     final statusColor = _colorFor(percent, budget.warningThreshold);
     final statusLabel = percent >= 1.0
         ? 'Exceeded'
@@ -35,18 +36,23 @@ class BudgetProgressWidget extends StatelessWidget {
                 Expanded(
                   child: Text(
                     budget.categoryId,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     statusLabel,
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: statusColor, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -58,7 +64,7 @@ class BudgetProgressWidget extends StatelessWidget {
                 value: percent.clamp(0.0, 1.5),
                 minHeight: 10,
                 color: statusColor,
-                backgroundColor: Colors.white10,
+                backgroundColor: Colors.black12,
               ),
             ),
             const SizedBox(height: 8),
@@ -67,11 +73,17 @@ class BudgetProgressWidget extends StatelessWidget {
               children: [
                 Text(
                   formatCurrency(budget.spent, symbol: currencySymbol),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
                   'of ${formatCurrency(budget.limit, symbol: currencySymbol)}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -84,6 +96,6 @@ class BudgetProgressWidget extends StatelessWidget {
   Color _colorFor(double percent, double warningThreshold) {
     if (percent >= 1.0) return AppTheme.danger;
     if (percent >= warningThreshold) return AppTheme.warning;
-    return AppTheme.teal;
+    return AppTheme.primary;
   }
 }

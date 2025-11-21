@@ -44,7 +44,8 @@ class HomeScreen extends ConsumerWidget {
         data: (transactions) {
           final now = DateTime.now();
           final thisMonthTransactions = transactions
-              .where((txn) => txn.date.year == now.year && txn.date.month == now.month)
+              .where((txn) =>
+                  txn.date.year == now.year && txn.date.month == now.month)
               .toList()
             ..sort((a, b) => b.date.compareTo(a.date));
 
@@ -62,11 +63,14 @@ class HomeScreen extends ConsumerWidget {
                   budget.spent >= budget.limit * budget.warningThreshold &&
                   budget.spent < budget.limit)
               .toList();
-          final exceededBudgets = budgets.where((b) => b.limit > 0 && b.spent >= b.limit).toList();
-          final lendTotal =
-              debts.where((d) => d.direction == DebtDirection.lend).fold<double>(0, (prev, debt) => prev + debt.balance);
-          final borrowTotal =
-              debts.where((d) => d.direction == DebtDirection.borrow).fold<double>(0, (prev, debt) => prev + debt.balance);
+          final exceededBudgets =
+              budgets.where((b) => b.limit > 0 && b.spent >= b.limit).toList();
+          final lendTotal = debts
+              .where((d) => d.direction == DebtDirection.lend)
+              .fold<double>(0, (prev, debt) => prev + debt.balance);
+          final borrowTotal = debts
+              .where((d) => d.direction == DebtDirection.borrow)
+              .fold<double>(0, (prev, debt) => prev + debt.balance);
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -76,7 +80,8 @@ class HomeScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
-                _heroCard(context, settings.currencySymbol, incomeTotal, expenseTotal, net),
+                _heroCard(context, settings.currencySymbol, incomeTotal,
+                    expenseTotal, net),
                 const SizedBox(height: 18),
                 _glanceRow(
                   context,
@@ -91,22 +96,27 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 18),
                 _buildBudgets(context, budgets, settings.currencySymbol),
                 const SizedBox(height: 18),
-                _buildSpendingChart(context, categorySpend, settings.currencySymbol),
+                _buildSpendingChart(
+                    context, categorySpend, settings.currencySymbol),
                 const SizedBox(height: 18),
-                _buildDebtSummary(context, settings.currencySymbol, lendTotal, borrowTotal),
+                _buildDebtSummary(
+                    context, settings.currencySymbol, lendTotal, borrowTotal),
                 const SizedBox(height: 28),
               ],
             ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Unable to load transactions')),
+        error: (_, __) =>
+            const Center(child: Text('Unable to load transactions')),
       ),
     );
   }
 
-  Map<String, double> _groupCategorySpend(List<FinanceTransaction> transactions) {
-    final expenseTxns = transactions.where((txn) => txn.type == TransactionType.expense && txn.categoryId != null);
+  Map<String, double> _groupCategorySpend(
+      List<FinanceTransaction> transactions) {
+    final expenseTxns = transactions.where(
+        (txn) => txn.type == TransactionType.expense && txn.categoryId != null);
     final grouped = groupBy(expenseTxns, (txn) => txn.categoryId ?? 'General');
     return grouped.map((category, txns) => MapEntry(category ?? 'General',
         txns.fold<double>(0, (prev, txn) => prev + txn.amount)));
@@ -148,8 +158,8 @@ class HomeScreen extends ConsumerWidget {
             context,
             title: 'Debts',
             value:
-                '${formatCurrency(lendTotal, symbol: currencySymbol)} owed · ${formatCurrency(borrowTotal, symbol: currencySymbol)} due',
-            color: AppTheme.accentPink,
+                '${formatCurrency(lendTotal, symbol: currencySymbol)} owed   ${formatCurrency(borrowTotal, symbol: currencySymbol)} due',
+            color: const Color.fromARGB(255, 126, 121, 124),
             icon: Icons.handshake_rounded,
           ),
         ),
@@ -170,13 +180,16 @@ class HomeScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppTheme.accentCyan, AppTheme.accentPink],
+          colors: [const Color(0xFFF9F5F0), Color(0xFFF2EAD3)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 10)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -205,13 +218,17 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(Icons.arrow_upward_rounded, size: 18, color: Colors.black87),
+                    Icon(Icons.arrow_upward_rounded,
+                        size: 18, color: Colors.black87),
                     const SizedBox(width: 6),
-                    Text(formatCurrency(income, symbol: currencySymbol), style: const TextStyle(color: Colors.black87)),
+                    Text(formatCurrency(income, symbol: currencySymbol),
+                        style: const TextStyle(color: Colors.black87)),
                     const SizedBox(width: 12),
-                    Icon(Icons.arrow_downward_rounded, size: 18, color: Colors.black87),
+                    Icon(Icons.arrow_downward_rounded,
+                        size: 18, color: Colors.black87),
                     const SizedBox(width: 6),
-                    Text(formatCurrency(expense, symbol: currencySymbol), style: const TextStyle(color: Colors.black87)),
+                    Text(formatCurrency(expense, symbol: currencySymbol),
+                        style: const TextStyle(color: Colors.black87)),
                   ],
                 ),
               ],
@@ -229,16 +246,23 @@ class HomeScreen extends ConsumerWidget {
                   child: CircularProgressIndicator(
                     value: spentRatio.toDouble(),
                     strokeWidth: 10,
-                    backgroundColor: Colors.white24,
+                    backgroundColor: Colors.black12,
                     valueColor: AlwaysStoppedAnimation<Color>(netColor),
                   ),
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Spent', style: TextStyle(color: Colors.black.withOpacity(0.7), fontWeight: FontWeight.w600)),
-                    Text('${(spentRatio * 100).clamp(0, 999).toStringAsFixed(0)}%',
-                        style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 18)),
+                    Text('Spent',
+                        style: TextStyle(
+                            color: Colors.black.withOpacity(0.7),
+                            fontWeight: FontWeight.w600)),
+                    Text(
+                        '${(spentRatio * 100).clamp(0, 999).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18)),
                   ],
                 ),
               ],
@@ -250,7 +274,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _metricCard(BuildContext context,
-      {required String title, required String value, required Color color, required IconData icon}) {
+      {required String title,
+      required String value,
+      required Color color,
+      required IconData icon}) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -272,7 +299,10 @@ class HomeScreen extends ConsumerWidget {
                   child: Text(
                     title,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white60),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: AppTheme.textSecondary),
                   ),
                 ),
               ],
@@ -302,7 +332,8 @@ class HomeScreen extends ConsumerWidget {
     final warningText = exceededBudgets.isNotEmpty
         ? '${exceededBudgets.length} budget${exceededBudgets.length == 1 ? '' : 's'} exceeded'
         : '${nearLimitBudgets.length} budget${nearLimitBudgets.length == 1 ? '' : 's'} near limit';
-    final color = exceededBudgets.isNotEmpty ? AppTheme.danger : AppTheme.warning;
+    final color =
+        exceededBudgets.isNotEmpty ? AppTheme.danger : AppTheme.warning;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -310,7 +341,9 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12)),
               child: Icon(Icons.info_outline_rounded, color: color),
             ),
             const SizedBox(width: 12),
@@ -320,10 +353,14 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   Text(
                     'Budgets Alert',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
-                  Text(warningText, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(warningText,
+                      style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),
             ),
@@ -333,7 +370,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBudgets(BuildContext context, List<CategoryBudget> budgets, String currencySymbol) {
+  Widget _buildBudgets(BuildContext context, List<CategoryBudget> budgets,
+      String currencySymbol) {
     if (budgets.isEmpty) {
       return Card(
         child: Padding(
@@ -342,12 +380,16 @@ class HomeScreen extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppTheme.accentTeal.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.flag_rounded, color: AppTheme.accentTeal),
+                decoration: BoxDecoration(
+                    color: AppTheme.accentTeal.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12)),
+                child:
+                    const Icon(Icons.flag_rounded, color: AppTheme.accentTeal),
               ),
               const SizedBox(width: 12),
               const Expanded(
-                child: Text('Set monthly budgets to get alerts when you are close to overspending.'),
+                child: Text(
+                    'Set monthly budgets to get alerts when you are close to overspending.'),
               ),
             ],
           ),
@@ -361,25 +403,39 @@ class HomeScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Budgets', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-            Text('${budgets.length} categories', style: Theme.of(context).textTheme.labelMedium),
+            Text('Budgets',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            Text('${budgets.length} categories',
+                style: Theme.of(context).textTheme.labelMedium),
           ],
         ),
         const SizedBox(height: 8),
-        ...budgets.map((budget) => BudgetProgressWidget(
-              budget: budget,
-              currencySymbol: currencySymbol,
+        ...budgets.map((budget) => GestureDetector(
+              onTap: () => _openAdd(
+                context,
+                TransactionType.expense,
+                categoryId: budget.categoryId,
+              ),
+              child: BudgetProgressWidget(
+                budget: budget,
+                currencySymbol: currencySymbol,
+              ),
             )),
       ],
     );
   }
 
-  Widget _buildSpendingChart(BuildContext context, Map<String, double> categorySpend, String currencySymbol) {
+  Widget _buildSpendingChart(BuildContext context,
+      Map<String, double> categorySpend, String currencySymbol) {
     if (categorySpend.isEmpty) {
       return const SizedBox.shrink();
     }
     final sections = _pieSections(categorySpend);
-    final total = categorySpend.values.fold<double>(0, (prev, value) => prev + value);
+    final total =
+        categorySpend.values.fold<double>(0, (prev, value) => prev + value);
 
     return Card(
       child: Padding(
@@ -387,7 +443,11 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Spending by category', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            Text('Spending by category',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             SizedBox(
               height: 200,
@@ -410,7 +470,12 @@ class HomeScreen extends ConsumerWidget {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+                    Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4))),
                     const SizedBox(width: 6),
                     Text(
                       '${entry.key} • ${percent.toStringAsFixed(0)}%',
@@ -449,7 +514,8 @@ class HomeScreen extends ConsumerWidget {
     }).toList();
   }
 
-  Widget _buildDebtSummary(BuildContext context, String currencySymbol, double lendTotal, double borrowTotal) {
+  Widget _buildDebtSummary(BuildContext context, String currencySymbol,
+      double lendTotal, double borrowTotal) {
     return Row(
       children: [
         Expanded(
@@ -461,13 +527,22 @@ class HomeScreen extends ConsumerWidget {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 8))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 8))
+              ],
             ),
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('People owe you', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black87)),
+                Text('People owe you',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: Colors.black87)),
                 const SizedBox(height: 8),
                 Text(
                   formatCurrency(lendTotal, symbol: currencySymbol),
@@ -490,13 +565,22 @@ class HomeScreen extends ConsumerWidget {
                 end: Alignment.bottomLeft,
               ),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 8))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 8))
+              ],
             ),
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('You owe others', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black87)),
+                Text('You owe others',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: Colors.black87)),
                 const SizedBox(height: 8),
                 Text(
                   formatCurrency(borrowTotal, symbol: currencySymbol),
@@ -542,13 +626,19 @@ class HomeScreen extends ConsumerWidget {
               MaterialPageRoute(builder: (_) => const LendBorrowScreen()),
             ),
           ),
-        ].map((w) => Padding(padding: const EdgeInsets.only(right: 12), child: w)).toList(),
+        ]
+            .map((w) =>
+                Padding(padding: const EdgeInsets.only(right: 12), child: w))
+            .toList(),
       ),
     );
   }
 
   Widget _quickAction(BuildContext context,
-      {required String label, required IconData icon, required Color color, required VoidCallback onTap}) {
+      {required String label,
+      required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -562,7 +652,10 @@ class HomeScreen extends ConsumerWidget {
           ),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
-            BoxShadow(color: color.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 8)),
+            BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 8)),
           ],
         ),
         child: Row(
@@ -592,10 +685,13 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openAdd(BuildContext context, TransactionType type) {
+  Future<void> _openAdd(BuildContext context, TransactionType type, {String? categoryId}) {
     return Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AddEditTransactionScreen(initialType: type),
+        builder: (_) => AddEditTransactionScreen(
+          initialType: type,
+          initialCategoryId: categoryId,
+        ),
       ),
     );
   }

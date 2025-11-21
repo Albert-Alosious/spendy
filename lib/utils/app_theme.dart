@@ -1,57 +1,59 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Nothing OS-inspired monochrome palette with cohesive neon accents.
-  static const Color primary = Color(0xFFF2F2F2);
-  static const Color accentCyan = Color(0xFF7CF4E1);
-  static const Color accentTeal = Color(0xFF3CF0C5);
-  static const Color accentPink = Color(0xFFFF6FA0);
-  static const Color accentAmber = Color(0xFFFFC857);
-  static const Color background = Color(0xFF0A0B0D);
-  static const Color surface = Color(0xFF14161A);
-  static const Color subtle = Color(0xFF1E2026);
-  static const Color warning = Color(0xFFFFC857);
-  static const Color danger = Color(0xFFFF5C8D);
-  static const Color success = Color(0xFF8AE234);
-  static const Color teal = Color(0xFF008080);
+  // Palette (light, clean)
+  static const Color primary = Color(0xFF0E7490); // Deep Teal
+  static const Color secondary = Color(0xFF1E3A8A); // Indigo Blue
+  static const Color accentPink = Color(0xFFFBCFE8); // Soft Peach Pink
+  static const Color accentAmber = Color(0xFFF59E0B); // Amber
+  static const Color accentTeal = primary;
+  static const Color accentCyan = secondary;
+  static const Color background = Color(0xFFF8FAFC); // Off-white
+  static const Color surface = Color(0xFFE2E8F0); // Cool Gray
+  static const Color subtle = Color(0xFFD8DEE9);
+  static const Color success = Color(0xFF10B981); // Emerald
+  static const Color warning = Color(0xFFF59E0B); // Amber
+  static const Color danger = Color(0xFFEF4444); // Soft Red
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF475569);
 
-  static final ThemeData dark = ThemeData(
-    brightness: Brightness.dark,
+  static final ThemeData light = ThemeData(
+    brightness: Brightness.light,
     useMaterial3: false,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: const ColorScheme.light(
       primary: primary,
-      secondary: accentTeal,
+      secondary: secondary,
       surface: surface,
       background: background,
       error: danger,
-      onPrimary: Colors.black,
-      onSecondary: Colors.black,
-      onSurface: primary,
-      onBackground: primary,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: textPrimary,
+      onBackground: textPrimary,
     ),
     scaffoldBackgroundColor: background,
     appBarTheme: const AppBarTheme(
       backgroundColor: background,
-      foregroundColor: primary,
+      foregroundColor: textPrimary,
       elevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: primary,
+        color: textPrimary,
       ),
     ),
     cardTheme: CardThemeData(
       color: surface,
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.25),
+      shadowColor: Colors.black.withOpacity(0.08),
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         elevation: 0,
@@ -59,53 +61,53 @@ class AppTheme {
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: primary,
-      foregroundColor: Colors.black,
+      foregroundColor: Colors.white,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: subtle,
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white24),
+        borderSide: BorderSide(color: subtle),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white24),
+        borderSide: BorderSide(color: subtle),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: accentCyan, width: 1.4),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+        borderSide: BorderSide(color: primary, width: 1.4),
       ),
-      labelStyle: const TextStyle(color: Colors.white70),
+      labelStyle: const TextStyle(color: textSecondary),
     ),
     chipTheme: ChipThemeData(
-      backgroundColor: subtle,
+      backgroundColor: surface,
       labelStyle: const TextStyle(
-        color: primary,
+        color: textPrimary,
         fontWeight: FontWeight.w600,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: Colors.white24),
+        side: BorderSide(color: subtle),
       ),
-      selectedColor: accentCyan.withOpacity(0.2),
-      secondarySelectedColor: accentCyan.withOpacity(0.2),
-      deleteIconColor: primary,
-      secondaryLabelStyle: const TextStyle(color: primary),
-      brightness: Brightness.dark,
+      selectedColor: primary.withOpacity(0.12),
+      secondarySelectedColor: primary.withOpacity(0.12),
+      deleteIconColor: textSecondary,
+      secondaryLabelStyle: const TextStyle(color: textPrimary),
+      brightness: Brightness.light,
     ),
-    dividerTheme: const DividerThemeData(
-      color: Color(0xFF2E3036),
+    dividerTheme: DividerThemeData(
+      color: subtle,
       thickness: 1,
       space: 24,
     ),
     textTheme: const TextTheme(
-      titleLarge: TextStyle(color: primary, fontWeight: FontWeight.w700),
-      titleMedium: TextStyle(color: primary, fontWeight: FontWeight.w600),
-      bodyMedium: TextStyle(color: Colors.white70),
-      labelLarge: TextStyle(color: Colors.white60),
+      titleLarge: TextStyle(color: textPrimary, fontWeight: FontWeight.w700),
+      titleMedium: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+      bodyMedium: TextStyle(color: textSecondary),
+      labelLarge: TextStyle(color: textSecondary),
     ),
   );
 }

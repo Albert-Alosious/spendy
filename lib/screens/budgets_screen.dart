@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../models/category.dart';
 import '../models/category_budget.dart';
 import '../providers/budget_notifier.dart';
 import '../providers/repository_providers.dart';
@@ -15,10 +16,24 @@ import '../widgets/budget_progress.dart';
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
 
+  static final _defaultCategories = <Category>[
+    Category(id: 'food', name: 'Food & Dining', colorHex: '#F59E0B', icon: 'restaurant', isExpense: true),
+    Category(id: 'transport', name: 'Transport', colorHex: '#0EA5E9', icon: 'directions_bus', isExpense: true),
+    Category(id: 'groceries', name: 'Groceries', colorHex: '#10B981', icon: 'shopping_basket', isExpense: true),
+    Category(id: 'rent', name: 'Rent', colorHex: '#6366F1', icon: 'home', isExpense: true),
+    Category(id: 'utilities', name: 'Utilities', colorHex: '#F97316', icon: 'bolt', isExpense: true),
+    Category(id: 'entertainment', name: 'Entertainment', colorHex: '#EC4899', icon: 'theaters', isExpense: true),
+    Category(id: 'shopping', name: 'Shopping', colorHex: '#E11D48', icon: 'shopping_bag', isExpense: true),
+    Category(id: 'health', name: 'Health', colorHex: '#22D3EE', icon: 'health_and_safety', isExpense: true),
+    Category(id: 'income', name: 'Income', colorHex: '#10B981', icon: 'payments', isExpense: false),
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final budgets = ref.watch(budgetNotifierProvider);
     final settings = ref.watch(settingProvider);
+    final repoCategories = ref.read(categoryRepositoryProvider).all;
+    final categories = repoCategories.isNotEmpty ? repoCategories : _defaultCategories;
 
     final nearLimit = budgets
         .where((budget) =>
@@ -33,7 +48,12 @@ class BudgetsScreen extends ConsumerWidget {
         title: const Text('Budgets'),
         actions: [
           IconButton(
-            onPressed: () => _openBudgetSheet(context, ref, currency: settings.currencySymbol),
+            onPressed: () => _openBudgetSheet(
+              context,
+              ref,
+              currency: settings.currencySymbol,
+              categories: categories,
+            ),
             icon: const Icon(Icons.add_rounded),
             tooltip: 'New budget',
           ),
@@ -57,7 +77,12 @@ class BudgetsScreen extends ConsumerWidget {
                     const Text('Set limits to keep spending in control.'),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => _openBudgetSheet(context, ref, currency: settings.currencySymbol),
+                      onPressed: () => _openBudgetSheet(
+                        context,
+                        ref,
+                        currency: settings.currencySymbol,
+                        categories: categories,
+                      ),
                       child: const Text('Create a budget'),
                     ),
                   ],
@@ -71,7 +96,13 @@ class BudgetsScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 ...budgets.map(
                   (budget) => GestureDetector(
-                    onTap: () => _openBudgetSheet(context, ref, currency: settings.currencySymbol, budget: budget),
+                    onTap: () => _openBudgetSheet(
+                      context,
+                      ref,
+                      currency: settings.currencySymbol,
+                      categories: categories,
+                      budget: budget,
+                    ),
                     child: BudgetProgressWidget(budget: budget, currencySymbol: settings.currencySymbol),
                   ),
                 ),
@@ -79,7 +110,12 @@ class BudgetsScreen extends ConsumerWidget {
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openBudgetSheet(context, ref, currency: settings.currencySymbol),
+        onPressed: () => _openBudgetSheet(
+          context,
+          ref,
+          currency: settings.currencySymbol,
+          categories: categories,
+        ),
         icon: const Icon(Icons.add_rounded),
         label: const Text('New budget'),
       ),
@@ -156,12 +192,14 @@ class BudgetsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref, {
     required String currency,
+    required List<Category> categories,
     CategoryBudget? budget,
   }) async {
     final categoryController = TextEditingController(text: budget?.categoryId ?? '');
     final limitController = TextEditingController(text: budget != null ? budget.limit.toStringAsFixed(0) : '');
     final warningController = TextEditingController(text: budget?.warningThreshold.toString() ?? '0.8');
     final formKey = GlobalKey<FormState>();
+    String? selectedCategoryId = budget?.categoryId.isNotEmpty == true ? budget?.categoryId : null;
 
     await showModalBottomSheet(
       context: context,
@@ -195,10 +233,23 @@ class BudgetsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: categoryController,
-                  decoration: const InputDecoration(labelText: 'Category name'),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'Category name required' : null,
+                DropdownButtonFormField<String>(
+                  value: selectedCategoryId,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  isExpanded: true,
+                  items: categories
+                      .map(
+                        (cat) => DropdownMenuItem(
+                          value: cat.id,
+                          child: Text(cat.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    selectedCategoryId = value;
+                    categoryController.text = value ?? '';
+                  },
+                  validator: (value) => (value == null || value.isEmpty) ? 'Pick a category' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(

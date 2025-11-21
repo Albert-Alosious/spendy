@@ -61,11 +61,11 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SpendWiser',
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.light,
+      themeMode: ThemeMode.light,
       home: Scaffold(
-        backgroundColor: AppTheme.dark.scaffoldBackgroundColor,
+        backgroundColor: AppTheme.light.scaffoldBackgroundColor,
         body: IndexedStack(
           index: _contentIndex,
           children: _contentScreens,
