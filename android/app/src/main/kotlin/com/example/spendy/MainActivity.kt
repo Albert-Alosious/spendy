@@ -1,4 +1,4 @@
-package com.example.spend_wiser
+package com.example.spendy
 
 import io.flutter.embedding.android.FlutterActivity
 

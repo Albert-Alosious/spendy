@@ -60,7 +60,7 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SpendWiser',
+      title: 'Spendy',
       theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,

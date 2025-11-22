@@ -17,10 +17,11 @@ class FakeTransactionRepository implements TransactionRepository {
   Stream<List<FinanceTransaction>> watchAll() => Stream.value(saved);
 
   @override
-  Future<void> addTransaction(FinanceTransaction transaction) async => saveTransaction(transaction);
+  Future<void> addTransaction(FinanceTransaction transaction, {bool adjustDebt = true}) async =>
+      saveTransaction(transaction);
 
   @override
-  Future<void> saveTransaction(FinanceTransaction transaction, {FinanceTransaction? previous}) async {
+  Future<void> saveTransaction(FinanceTransaction transaction, {FinanceTransaction? previous, bool adjustDebt = true}) async {
     saved.removeWhere((txn) => txn.id == transaction.id);
     saved.add(transaction);
   }

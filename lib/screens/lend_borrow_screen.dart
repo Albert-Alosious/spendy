@@ -289,7 +289,7 @@ class LendBorrowScreen extends ConsumerWidget {
               date: DateTime.now(),
             );
             final txn = await ref.read(debtNotifierProvider.notifier).repay(payment);
-            await ref.read(transactionRepositoryProvider).saveTransaction(txn);
+            await ref.read(transactionRepositoryProvider).saveTransaction(txn, adjustDebt: false);
             if (dialogContext.mounted) Navigator.pop(dialogContext);
           },
           child: const Text('Submit'),

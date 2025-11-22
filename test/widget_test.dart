@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:spend_wiser/main.dart';
+import 'package:spendy/main.dart';
 
 void main() {
   testWidgets('App renders bottom navigation', (WidgetTester tester) async {

@@ -30,17 +30,17 @@ class TransactionRepository {
     }
   }
 
-  Future<void> addTransaction(FinanceTransaction transaction) async {
-    await saveTransaction(transaction);
+  Future<void> addTransaction(FinanceTransaction transaction, {bool adjustDebt = true}) async {
+    await saveTransaction(transaction, adjustDebt: adjustDebt);
   }
 
-  Future<void> saveTransaction(FinanceTransaction transaction, {FinanceTransaction? previous}) async {
+  Future<void> saveTransaction(FinanceTransaction transaction, {FinanceTransaction? previous, bool adjustDebt = true}) async {
     final existing = previous ?? _box.get(transaction.id);
     if (existing != null) {
-      await _applyAdjustments(existing, -1, notifyBudget: false);
+      await _applyAdjustments(existing, -1, notifyBudget: false, adjustDebt: adjustDebt);
     }
     await _box.put(transaction.id, transaction);
-    await _applyAdjustments(transaction, 1);
+    await _applyAdjustments(transaction, 1, adjustDebt: adjustDebt);
   }
 
   Future<void> delete(String id) async {
@@ -54,6 +54,7 @@ class TransactionRepository {
     FinanceTransaction transaction,
     double direction, {
     bool notifyBudget = true,
+    bool adjustDebt = true,
   }) async {
     if (transaction.type == TransactionType.expense && transaction.categoryId != null) {
       final budget = await _budgetRepository.adjustSpent(
@@ -65,7 +66,7 @@ class TransactionRepository {
         _notificationService.maybeNotifyBudgetThreshold(budget);
       }
     }
-    if (transaction.debtId != null) {
+    if (adjustDebt && transaction.debtId != null) {
       final debt = _debtRepository.find(transaction.debtId!);
       if (debt != null) {
         final delta = transaction.type == TransactionType.expense ? transaction.amount : -transaction.amount;

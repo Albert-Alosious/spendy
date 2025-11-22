@@ -29,7 +29,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SpendWiser'),
+        title: const Text('Spendy'),
         actions: [
           IconButton(
             tooltip: 'Settings',

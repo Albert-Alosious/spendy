@@ -42,7 +42,7 @@ class NotificationService {
 
   Future<void> _showNotification({required int id, required String title, required String body}) async {
     const details = NotificationDetails(
-      android: AndroidNotificationDetails('spend_wiser', 'SpendWiser Alerts', importance: Importance.defaultImportance),
+      android: AndroidNotificationDetails('spendy', 'Spendy Alerts', importance: Importance.defaultImportance),
     );
     await _plugin.show(id, title, body, details);
   }

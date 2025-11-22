@@ -1,6 +1,6 @@
 {
-    "name": "spend_wiser",
-    "short_name": "spend_wiser",
+    "name": "Spendy",
+    "short_name": "Spendy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

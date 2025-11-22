@@ -1,4 +1,4 @@
-# spend_wiser
+# spendy
 
 A new Flutter project.
 
