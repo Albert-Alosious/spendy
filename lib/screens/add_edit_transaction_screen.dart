@@ -6,7 +6,9 @@ import '../models/category.dart';
 import '../models/finance_transaction.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
+import '../providers/category_list_provider.dart';
 import '../utils/formatters.dart';
+import '../utils/default_categories.dart';
 
 class AddEditTransactionScreen extends ConsumerStatefulWidget {
   final FinanceTransaction? existing;
@@ -32,17 +34,6 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
   bool linkDebt = false;
   String? selectedCategoryId;
   bool customCategory = false;
-  static final _defaultCategories = <Category>[
-    Category(id: 'food', name: 'Food & Dining', colorHex: '#F59E0B', icon: 'restaurant', isExpense: true),
-    Category(id: 'transport', name: 'Transport', colorHex: '#0EA5E9', icon: 'directions_bus', isExpense: true),
-    Category(id: 'groceries', name: 'Groceries', colorHex: '#10B981', icon: 'shopping_basket', isExpense: true),
-    Category(id: 'rent', name: 'Rent', colorHex: '#6366F1', icon: 'home', isExpense: true),
-    Category(id: 'utilities', name: 'Utilities', colorHex: '#F97316', icon: 'bolt', isExpense: true),
-    Category(id: 'entertainment', name: 'Entertainment', colorHex: '#EC4899', icon: 'theaters', isExpense: true),
-    Category(id: 'shopping', name: 'Shopping', colorHex: '#E11D48', icon: 'shopping_bag', isExpense: true),
-    Category(id: 'health', name: 'Health', colorHex: '#22D3EE', icon: 'health_and_safety', isExpense: true),
-    Category(id: 'income', name: 'Income', colorHex: '#10B981', icon: 'payments', isExpense: false),
-  ];
 
   bool get isEditing => widget.existing != null;
 
@@ -80,8 +71,8 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingProvider);
-    final repoCategories = ref.watch(categoryRepositoryProvider).all;
-    final categories = repoCategories.isNotEmpty ? repoCategories : _defaultCategories;
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final categories = categoriesAsync.asData?.value ?? defaultCategories;
     final hasSelectionInList = selectedCategoryId != null && categories.any((c) => c.id == selectedCategoryId);
     customCategory = customCategory || (!hasSelectionInList && (selectedCategoryId?.isNotEmpty ?? false));
     return Scaffold(
@@ -259,12 +250,16 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final resolvedCategory = _resolvedCategoryId();
+    if (resolvedCategory != null) {
+      _persistCategory(resolvedCategory, type != TransactionType.income);
+    }
     final txn = FinanceTransaction(
       id: widget.existing?.id ?? const Uuid().v4(),
       type: type,
       amount: double.parse(amountController.text),
       date: date,
-      categoryId: _resolvedCategoryId(),
+      categoryId: resolvedCategory,
       fromAccountId: fromAccountController.text.trim().isEmpty ? null : fromAccountController.text.trim(),
       toAccountId: toAccountController.text.trim().isEmpty ? null : toAccountController.text.trim(),
       note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
@@ -284,6 +279,30 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
     if (customCategory && manual.isNotEmpty) return manual;
     if (!customCategory && (selectedCategoryId?.isNotEmpty ?? false)) return selectedCategoryId;
     return manual.isEmpty ? null : manual;
+  }
+
+  void _persistCategory(String categoryId, bool isExpense) {
+    final repo = ref.read(categoryRepositoryProvider);
+    final exists = repo.all.any((c) => c.id == categoryId);
+    if (!exists) {
+      repo.save(
+        Category(
+          id: categoryId,
+          name: categoryId,
+          colorHex: '#8B5E3C',
+          icon: 'label',
+          isExpense: isExpense,
+        ),
+      );
+    }
+  }
+
+  List<Category> _mergedCategories(List<Category> repoCategories) {
+    final ids = repoCategories.map((c) => c.id).toSet();
+    return [
+      ...repoCategories,
+      ...defaultCategories.where((c) => !ids.contains(c.id)),
+    ];
   }
 }
 

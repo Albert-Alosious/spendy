@@ -4,36 +4,27 @@ import 'package:uuid/uuid.dart';
 
 import '../models/category.dart';
 import '../models/category_budget.dart';
+import '../models/finance_transaction.dart';
 import '../providers/budget_notifier.dart';
+import '../providers/category_list_provider.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
 import '../services/notification_service.dart';
 import '../utils/app_theme.dart';
 import '../utils/formatters.dart';
 import '../utils/date_utils.dart';
+import '../utils/default_categories.dart';
 import '../widgets/budget_progress.dart';
 
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
 
-  static final _defaultCategories = <Category>[
-    Category(id: 'food', name: 'Food & Dining', colorHex: '#F59E0B', icon: 'restaurant', isExpense: true),
-    Category(id: 'transport', name: 'Transport', colorHex: '#0EA5E9', icon: 'directions_bus', isExpense: true),
-    Category(id: 'groceries', name: 'Groceries', colorHex: '#10B981', icon: 'shopping_basket', isExpense: true),
-    Category(id: 'rent', name: 'Rent', colorHex: '#6366F1', icon: 'home', isExpense: true),
-    Category(id: 'utilities', name: 'Utilities', colorHex: '#F97316', icon: 'bolt', isExpense: true),
-    Category(id: 'entertainment', name: 'Entertainment', colorHex: '#EC4899', icon: 'theaters', isExpense: true),
-    Category(id: 'shopping', name: 'Shopping', colorHex: '#E11D48', icon: 'shopping_bag', isExpense: true),
-    Category(id: 'health', name: 'Health', colorHex: '#22D3EE', icon: 'health_and_safety', isExpense: true),
-    Category(id: 'income', name: 'Income', colorHex: '#10B981', icon: 'payments', isExpense: false),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final budgets = ref.watch(budgetNotifierProvider);
     final settings = ref.watch(settingProvider);
-    final repoCategories = ref.read(categoryRepositoryProvider).all;
-    final categories = repoCategories.isNotEmpty ? repoCategories : _defaultCategories;
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final categories = categoriesAsync.asData?.value ?? defaultCategories;
 
     final nearLimit = budgets
         .where((budget) =>
@@ -280,16 +271,37 @@ class BudgetsScreen extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (!formKey.currentState!.validate()) return;
+                      final txns = ref.read(transactionRepositoryProvider).all;
+                      final month = budget?.month ?? monthKey(DateTime.now());
+                      final computedSpent = txns
+                          .where((t) =>
+                              t.type == TransactionType.expense &&
+                              t.categoryId == (selectedCategoryId ?? categoryController.text.trim()) &&
+                              monthKey(t.date) == month)
+                          .fold<double>(0, (prev, t) => prev + t.amount);
                       final limit = double.parse(limitController.text);
                       final warning = double.parse(warningController.text);
+                      final categoryId = categoryController.text.trim();
                       final payload = CategoryBudget(
                         id: budget?.id ?? const Uuid().v4(),
-                        categoryId: categoryController.text.trim(),
-                        month: budget?.month ?? monthKey(DateTime.now()),
+                        categoryId: categoryId,
+                        month: month,
                         limit: limit,
                         warningThreshold: warning,
-                        spent: budget?.spent ?? 0,
+                        spent: computedSpent,
                       );
+                      // Persist custom categories so dropdowns show them later
+                      final categoryRepo = ref.read(categoryRepositoryProvider);
+                      final exists = categoryRepo.all.any((c) => c.id == categoryId);
+                      if (!exists) {
+                        categoryRepo.save(Category(
+                          id: categoryId,
+                          name: categoryId,
+                          colorHex: '#8B5E3C',
+                          icon: 'label',
+                          isExpense: true,
+                        ));
+                      }
                       await ref.read(budgetNotifierProvider.notifier).update(payload);
                       ref.read(notificationServiceProvider).maybeNotifyBudgetThreshold(payload);
                       if (context.mounted) Navigator.of(sheetContext).pop();
@@ -370,5 +382,13 @@ class BudgetsScreen extends ConsumerWidget {
       await ref.read(budgetRepositoryProvider).delete(budget.id);
       ref.read(budgetNotifierProvider.notifier).refresh();
     }
+  }
+
+  List<Category> _mergedCategories(List<Category> repoCategories) {
+    final ids = repoCategories.map((c) => c.id).toSet();
+    return [
+      ...repoCategories,
+      ...defaultCategories.where((c) => !ids.contains(c.id)),
+    ];
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/category.dart';
 import '../models/finance_transaction.dart';
+import '../utils/default_categories.dart';
+import '../providers/category_list_provider.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
 import '../providers/stream_providers.dart';
@@ -25,17 +27,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String accountFilter = '';
   DateTimeRange? dateRange;
   String? selectedCategoryId;
-  static final _defaultCategories = <Category>[
-    Category(id: 'food', name: 'Food & Dining', colorHex: '#F59E0B', icon: 'restaurant', isExpense: true),
-    Category(id: 'transport', name: 'Transport', colorHex: '#0EA5E9', icon: 'directions_bus', isExpense: true),
-    Category(id: 'groceries', name: 'Groceries', colorHex: '#10B981', icon: 'shopping_basket', isExpense: true),
-    Category(id: 'rent', name: 'Rent', colorHex: '#6366F1', icon: 'home', isExpense: true),
-    Category(id: 'utilities', name: 'Utilities', colorHex: '#F97316', icon: 'bolt', isExpense: true),
-    Category(id: 'entertainment', name: 'Entertainment', colorHex: '#EC4899', icon: 'theaters', isExpense: true),
-    Category(id: 'shopping', name: 'Shopping', colorHex: '#E11D48', icon: 'shopping_bag', isExpense: true),
-    Category(id: 'health', name: 'Health', colorHex: '#22D3EE', icon: 'health_and_safety', isExpense: true),
-    Category(id: 'income', name: 'Income', colorHex: '#10B981', icon: 'payments', isExpense: false),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -141,8 +132,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   Widget _buildFilters() {
-    final repoCategories = ref.watch(categoryRepositoryProvider).all;
-    final categories = repoCategories.isNotEmpty ? repoCategories : _defaultCategories;
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final categories = categoriesAsync.asData?.value ?? defaultCategories;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Column(
@@ -280,6 +271,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     if (key.contains('health') || key.contains('med')) return Icons.health_and_safety_rounded;
     if (key.contains('entertainment') || key.contains('movie')) return Icons.theaters_rounded;
     return Icons.label_rounded;
+  }
+
+  List<Category> _mergedCategories(List<Category> repoCategories) {
+    final ids = repoCategories.map((c) => c.id).toSet();
+    return [
+      ...repoCategories,
+      ...defaultCategories.where((c) => !ids.contains(c.id)),
+    ];
   }
 
   Future<void> _delete(FinanceTransaction txn) async {
