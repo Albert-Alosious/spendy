@@ -71,6 +71,7 @@ class HomeScreen extends ConsumerWidget {
           final borrowTotal = debts
               .where((d) => d.direction == DebtDirection.borrow)
               .fold<double>(0, (prev, debt) => prev + debt.balance);
+          final frequentCategories = _frequentCategories(thisMonthTransactions);
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -93,11 +94,15 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 18),
                 _buildQuickActions(context),
+                if (frequentCategories.isNotEmpty) ...[
+                  const SizedBox(height: 18),
+                  _buildCategoryShortcuts(context, frequentCategories),
+                ],
                 const SizedBox(height: 18),
                 _buildBudgets(context, budgets, settings.currencySymbol),
                 const SizedBox(height: 18),
                 _buildSpendingChart(
-                    context, categorySpend, settings.currencySymbol),
+                    context, categorySpend, settings.currencySymbol, thisMonthTransactions),
                 const SizedBox(height: 18),
                 _buildDebtSummary(
                     context, settings.currencySymbol, lendTotal, borrowTotal),
@@ -120,6 +125,120 @@ class HomeScreen extends ConsumerWidget {
     final grouped = groupBy(expenseTxns, (txn) => txn.categoryId ?? 'General');
     return grouped.map((category, txns) => MapEntry(category ?? 'General',
         txns.fold<double>(0, (prev, txn) => prev + txn.amount)));
+  }
+
+  List<String> _frequentCategories(List<FinanceTransaction> transactions) {
+    final expenseTxns = transactions
+        .where((txn) =>
+            txn.type == TransactionType.expense && txn.categoryId != null)
+        .toList();
+    if (expenseTxns.isEmpty) return [];
+    final counts = <String, int>{};
+    for (final txn in expenseTxns) {
+      final key = txn.categoryId!;
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(4).map((e) => e.key).toList();
+  }
+
+  Future<void> _showCategoryDetails(
+    BuildContext context,
+    String category,
+    double total,
+    Color color,
+    String currencySymbol,
+    List<FinanceTransaction> transactions,
+  ) {
+    final txns = transactions
+        .where((t) => t.type == TransactionType.expense && t.categoryId == category)
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        category,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Total: ${formatCurrency(total, symbol: currencySymbol)}',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800, color: color),
+              ),
+              const SizedBox(height: 12),
+              if (txns.isEmpty)
+                const Text('No expenses in this category this month.')
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: txns.length,
+                    separatorBuilder: (_, __) => const Divider(height: 16),
+                    itemBuilder: (context, index) {
+                      final txn = txns[index];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          txn.note ?? 'Expense',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(formatDateTime(txn.date)),
+                        trailing: Text(
+                          '- ${formatCurrency(txn.amount, symbol: currencySymbol)}',
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _heroCard(
@@ -428,8 +547,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSpendingChart(BuildContext context,
-      Map<String, double> categorySpend, String currencySymbol) {
+  Widget _buildSpendingChart(
+      BuildContext context,
+      Map<String, double> categorySpend,
+      String currencySymbol,
+      List<FinanceTransaction> transactions) {
     if (categorySpend.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -467,21 +589,31 @@ class HomeScreen extends ConsumerWidget {
                 final index = categorySpend.keys.toList().indexOf(entry.key);
                 final percent = total == 0 ? 0 : (entry.value / total * 100);
                 final color = sections[index].color;
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(4))),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${entry.key} • ${percent.toStringAsFixed(0)}%',
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ],
+                return GestureDetector(
+                  onTap: () => _showCategoryDetails(
+                    context,
+                    entry.key,
+                    entry.value,
+                    color,
+                    currencySymbol,
+                    transactions,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(4))),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${entry.key} • ${percent.toStringAsFixed(0)}%',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ],
+                  ),
                 );
               }).toList(),
             ),
@@ -631,6 +763,69 @@ class HomeScreen extends ConsumerWidget {
                 Padding(padding: const EdgeInsets.only(right: 12), child: w))
             .toList(),
       ),
+    );
+  }
+
+  Widget _buildCategoryShortcuts(
+      BuildContext context, List<String> categories) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Regular expenses',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+                color: Colors.white,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final itemWidth = (constraints.maxWidth - 16) / 3;
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories
+                    .map(
+                      (cat) => SizedBox(
+                        width: itemWidth,
+                        child: ActionChip(
+                          label: Text(
+                            cat,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          backgroundColor: AppTheme.subtle,
+                          shape: const StadiumBorder(
+                            side: BorderSide(color: Colors.white24),
+                          ),
+                          elevation: 0,
+                          onPressed: () => _openAdd(
+                            context,
+                            TransactionType.expense,
+                            categoryId: cat,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
