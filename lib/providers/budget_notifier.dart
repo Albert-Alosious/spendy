@@ -33,6 +33,8 @@ class BudgetNotifier extends StateNotifier<List<CategoryBudget>> {
     await _repository.upsert(budget);
   }
 
+  String get currentMonth => _currentMonth;
+
   @override
   void dispose() {
     _subscription?.cancel();

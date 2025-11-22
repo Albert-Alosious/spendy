@@ -103,6 +103,7 @@ class BudgetsScreen extends ConsumerWidget {
                       categories: categories,
                       budget: budget,
                     ),
+                    onLongPress: () => _showBudgetActions(context, ref, budget, settings.currencySymbol, categories),
                     child: BudgetProgressWidget(budget: budget, currencySymbol: settings.currencySymbol),
                   ),
                 ),
@@ -302,5 +303,72 @@ class BudgetsScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _showBudgetActions(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryBudget budget,
+    String currency,
+    List<Category> categories,
+  ) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_rounded),
+              title: const Text('Edit budget'),
+              onTap: () => Navigator.of(sheetContext).pop('edit'),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.delete_outline_rounded, color: AppTheme.danger),
+              title: const Text('Delete budget'),
+              onTap: () => Navigator.of(sheetContext).pop('delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (action == 'edit') {
+      _openBudgetSheet(context, ref,
+          currency: currency, categories: categories, budget: budget);
+    } else if (action == 'delete') {
+      await _confirmDelete(context, ref, budget);
+    }
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    CategoryBudget budget,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete budget?'),
+        content: Text('Remove budget for ${budget.categoryId}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(budgetRepositoryProvider).delete(budget.id);
+      ref.read(budgetNotifierProvider.notifier).refresh();
+    }
   }
 }

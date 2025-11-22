@@ -11,6 +11,7 @@ import 'screens/transactions_screen.dart';
 import 'services/notification_service.dart';
 import 'screens/add_edit_transaction_screen.dart';
 import 'utils/app_theme.dart';
+import 'screens/history_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,7 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
     HomeScreen(),
     TransactionsScreen(),
     BudgetsScreen(),
-    LendBorrowScreen(),
+    HistoryScreen(),
   ];
 
   @override
@@ -97,21 +98,21 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
             onTap: (index) => _onNavTap(context, index),
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: AppTheme.accentTeal,
-            unselectedItemColor: const Color.fromARGB(179, 168, 166, 166),
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard_rounded), label: 'Home'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.receipt_long_rounded),
-                  label: 'Transactions'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.handshake_rounded), label: 'Lend/Borrow'),
-            ],
-          ),
+        elevation: 0,
+        selectedItemColor: AppTheme.accentTeal,
+        unselectedItemColor: const Color.fromARGB(179, 168, 166, 166),
+        items: const [
+          BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_rounded), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_rounded),
+              label: 'Transactions'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.history_rounded), label: 'History'),
+        ],
+      ),
         ),
       ),
     );
