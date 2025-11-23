@@ -41,6 +41,7 @@ class LendBorrowScreen extends ConsumerWidget {
           ],
         ),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: 'lendborrow-fab',
           onPressed: () => _createDebt(context, ref, settings.currencySymbol),
           icon: const Icon(Icons.add_rounded),
           label: const Text('New debt'),

@@ -100,8 +100,9 @@ class BudgetsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 70),
               ],
-            ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'budgets-fab',
         onPressed: () => _openBudgetSheet(
           context,
           ref,

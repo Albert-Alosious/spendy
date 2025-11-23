@@ -35,6 +35,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'transactions-fab',
         onPressed: () => _openAdd(),
         child: const Icon(Icons.add_rounded),
       ),
