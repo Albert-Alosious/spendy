@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/category.dart';
 import '../models/finance_transaction.dart';
+import '../models/payment_mode.dart';
 import '../utils/default_categories.dart';
 import '../providers/category_list_provider.dart';
 import '../providers/repository_providers.dart';
@@ -27,6 +28,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   String accountFilter = '';
   DateTimeRange? dateRange;
   String? selectedCategoryId;
+  PaymentMode? paymentModeFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +129,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       final matchesDate = dateRange == null ||
           (txn.date.isAfter(dateRange!.start.subtract(const Duration(seconds: 1))) &&
               txn.date.isBefore(dateRange!.end.add(const Duration(seconds: 1))));
-      return matchesType && matchesSearch && matchesCategory && matchesAccount && matchesDate;
+      final matchesPaymentMode = paymentModeFilter == null || txn.paymentMode == paymentModeFilter;
+      return matchesType && matchesSearch && matchesCategory && matchesAccount && matchesDate && matchesPaymentMode;
     }).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
@@ -169,6 +172,25 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     : '${formatShortDate(dateRange!.start)} — ${formatShortDate(dateRange!.end)}'),
                 selected: dateRange != null,
                 onSelected: (_) => _pickRange(),
+              ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<PaymentMode>(
+                  value: paymentModeFilter,
+                  hint: const Text('Payment Mode'),
+                  items: [
+                    const DropdownMenuItem<PaymentMode>(
+                      value: null,
+                      child: Text('All Modes'),
+                    ),
+                    ...PaymentMode.values.map(
+                      (mode) => DropdownMenuItem(
+                        value: mode,
+                        child: Text(mode.displayName),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => paymentModeFilter = value),
+                ),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -295,7 +317,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       filterType = null;
       categoryFilter = '';
       accountFilter = '';
+      accountFilter = '';
       dateRange = null;
+      paymentModeFilter = null;
     });
   }
 

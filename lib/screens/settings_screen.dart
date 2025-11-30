@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/payment_mode.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
 
@@ -73,6 +74,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             trailing: IconButton(
               icon: const Icon(Icons.edit_calendar_rounded),
               onPressed: () => _editReminderDays(context, settings.debtReminderDays),
+            ),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Default payment mode'),
+            subtitle: Text(settings.defaultPaymentMode?.displayName ?? 'None'),
+            trailing: DropdownButtonHideUnderline(
+              child: DropdownButton<PaymentMode>(
+                value: settings.defaultPaymentMode,
+                icon: const Icon(Icons.arrow_drop_down_rounded),
+                items: [
+                  const DropdownMenuItem(
+                    value: null,
+                    child: Text('None'),
+                  ),
+                  ...PaymentMode.values.map(
+                    (mode) => DropdownMenuItem(
+                      value: mode,
+                      child: Text(mode.displayName),
+                    ),
+                  ),
+                ],
+                onChanged: (value) =>
+                    ref.read(settingProvider.notifier).updateBudgetPreferences(defaultPaymentMode: value),
+              ),
             ),
           ),
           const Divider(),

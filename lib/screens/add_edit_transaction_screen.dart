@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/category.dart';
 import '../models/finance_transaction.dart';
+import '../models/payment_mode.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
 import '../providers/category_list_provider.dart';
@@ -25,6 +26,7 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
   final _formKey = GlobalKey<FormState>();
   late TransactionType type;
   late DateTime date;
+  PaymentMode? paymentMode;
   final amountController = TextEditingController();
   final categoryController = TextEditingController();
   final fromAccountController = TextEditingController();
@@ -41,8 +43,10 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
   void initState() {
     super.initState();
     final existing = widget.existing;
+    final settings = ref.read(settingProvider);
     type = existing?.type ?? widget.initialType ?? TransactionType.expense;
     date = existing?.date ?? DateTime.now();
+    paymentMode = existing?.paymentMode ?? (existing == null ? settings.defaultPaymentMode : null);
     selectedCategoryId = existing?.categoryId ?? widget.initialCategoryId;
     if (existing != null) {
       amountController.text = existing.amount.toStringAsFixed(existing.amount % 1 == 0 ? 0 : 2);
@@ -125,6 +129,22 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
                       trailing: const Icon(Icons.calendar_today_rounded),
                       onTap: _pickDate,
                     ),
+                    if (type == TransactionType.expense || type == TransactionType.transfer) ...[
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<PaymentMode>(
+                        value: paymentMode,
+                        decoration: const InputDecoration(labelText: 'Payment Mode'),
+                        items: PaymentMode.values
+                            .map(
+                              (mode) => DropdownMenuItem(
+                                value: mode,
+                                child: Text(mode.displayName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) => setState(() => paymentMode = value),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: hasSelectionInList ? selectedCategoryId : null,
@@ -264,6 +284,7 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
       toAccountId: toAccountController.text.trim().isEmpty ? null : toAccountController.text.trim(),
       note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
       debtId: linkDebt && debtController.text.trim().isNotEmpty ? debtController.text.trim() : null,
+      paymentMode: paymentMode,
     );
     await ref.read(transactionRepositoryProvider).saveTransaction(txn, previous: widget.existing);
     if (mounted) {

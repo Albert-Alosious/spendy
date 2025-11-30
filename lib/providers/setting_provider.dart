@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/payment_mode.dart';
 import '../models/setting.dart';
 import '../repositories/setting_repository.dart';
 import 'repository_providers.dart';
@@ -23,11 +24,13 @@ class SettingNotifier extends StateNotifier<Setting> {
     bool? budgetWarningEnabled,
     bool? budgetLimitEnabled,
     int? debtReminderDays,
+    PaymentMode? defaultPaymentMode,
   }) async {
     final updated = state.copyWith(
       budgetWarningEnabled: budgetWarningEnabled,
       budgetLimitEnabled: budgetLimitEnabled,
       debtReminderDays: debtReminderDays,
+      defaultPaymentMode: defaultPaymentMode,
       lastExport: DateTime.now(),
     );
     await _repository.save(updated);
@@ -41,6 +44,9 @@ class SettingNotifier extends StateNotifier<Setting> {
       budgetWarningEnabled: json['budgetWarningEnabled'] as bool? ?? state.budgetWarningEnabled,
       budgetLimitEnabled: json['budgetLimitEnabled'] as bool? ?? state.budgetLimitEnabled,
       debtReminderDays: json['debtReminderDays'] as int? ?? state.debtReminderDays,
+      defaultPaymentMode: json['defaultPaymentMode'] != null
+          ? PaymentMode.values[json['defaultPaymentMode'] as int]
+          : state.defaultPaymentMode,
       lastExport: DateTime.now(),
     );
     await _repository.save(updated);

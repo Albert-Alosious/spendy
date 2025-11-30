@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'payment_mode.dart';
+
 enum TransactionType { expense, income, transfer }
 
 class FinanceTransaction extends HiveObject {
@@ -12,6 +14,7 @@ class FinanceTransaction extends HiveObject {
   final String? toAccountId;
   final String? note;
   final String? debtId;
+  final PaymentMode? paymentMode;
   final Map<String, String> metadata;
 
   FinanceTransaction({
@@ -24,6 +27,7 @@ class FinanceTransaction extends HiveObject {
     this.toAccountId,
     this.note,
     this.debtId,
+    this.paymentMode,
     this.metadata = const {},
   });
 }
@@ -58,6 +62,13 @@ class FinanceTransactionAdapter extends TypeAdapter<FinanceTransaction> {
         metadata[key] = value;
       }
     }
+    PaymentMode? paymentMode;
+    if (reader.availableBytes > 0) {
+      final hasPaymentMode = reader.readBool();
+      if (hasPaymentMode) {
+        paymentMode = PaymentMode.values[reader.readInt()];
+      }
+    }
     return FinanceTransaction(
       id: id,
       type: type,
@@ -68,6 +79,7 @@ class FinanceTransactionAdapter extends TypeAdapter<FinanceTransaction> {
       toAccountId: toAccountId,
       note: note,
       debtId: debtId,
+      paymentMode: paymentMode,
       metadata: metadata,
     );
   }
@@ -106,6 +118,10 @@ class FinanceTransactionAdapter extends TypeAdapter<FinanceTransaction> {
       obj.metadata.forEach((key, value) {
         writer..writeString(key)..writeString(value);
       });
+    }
+    writer.writeBool(obj.paymentMode != null);
+    if (obj.paymentMode != null) {
+      writer.writeInt(obj.paymentMode!.index);
     }
   }
 }
