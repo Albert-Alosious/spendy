@@ -38,18 +38,6 @@ class BudgetsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Budgets'),
-        actions: [
-          IconButton(
-            onPressed: () => _openBudgetSheet(
-              context,
-              ref,
-              currency: settings.currencySymbol,
-              categories: categories,
-            ),
-            icon: const Icon(Icons.add_rounded),
-            tooltip: 'New budget',
-          ),
-        ],
       ),
       body: budgets.isEmpty
           ? Padding(
@@ -67,16 +55,6 @@ class BudgetsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text('Set limits to keep spending in control.'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => _openBudgetSheet(
-                        context,
-                        ref,
-                        currency: settings.currencySymbol,
-                        categories: categories,
-                      ),
-                      child: const Text('Create a budget'),
-                    ),
                   ],
                 ),
               ),

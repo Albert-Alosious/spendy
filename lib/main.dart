@@ -92,25 +92,29 @@ class _SpendWiserAppState extends ConsumerState<SpendWiserApp> {
               ),
             ],
           ),
-          child: BottomNavigationBar(
-            currentIndex: _navIndex,
-            onTap: (index) => _onNavTap(context, index),
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            selectedItemColor: AppTheme.accentTeal,
-            unselectedItemColor: const Color.fromARGB(179, 127, 123, 123),
-            items: const [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard_rounded), label: 'Home'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.receipt_long_rounded),
-                  label: 'Transactions'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.handshake_rounded), label: 'Lend/Borrow'),
-            ],
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: BottomNavigationBar(
+              currentIndex: _navIndex,
+              onTap: (index) => _onNavTap(context, index),
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              selectedItemColor: AppTheme.accentTeal,
+              unselectedItemColor: const Color.fromARGB(179, 127, 123, 123),
+              items: const [
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.dashboard_rounded), label: 'Home'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.receipt_long_rounded),
+                    label: 'Transactions'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.pie_chart_rounded), label: 'Budgets'),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.handshake_rounded), label: 'Lend/Borrow'),
+              ],
+            ),
           ),
         ),
       ),
