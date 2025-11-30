@@ -8,6 +8,7 @@ import '../models/payment_mode.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
 import '../providers/category_list_provider.dart';
+import '../widgets/app_dropdown.dart';
 import '../utils/formatters.dart';
 import '../utils/default_categories.dart';
 
@@ -131,36 +132,23 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
                     ),
                     if (type == TransactionType.expense || type == TransactionType.transfer) ...[
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<PaymentMode>(
+                      AppDropdown<PaymentMode>(
                         value: paymentMode,
-                        decoration: const InputDecoration(labelText: 'Payment Mode'),
+                        labelText: 'Payment Mode',
                         items: PaymentMode.values
-                            .map(
-                              (mode) => DropdownMenuItem(
-                                value: mode,
-                                child: Text(mode.displayName),
-                              ),
-                            )
+                            .map((mode) => AppDropdownItem(value: mode, text: mode.displayName))
                             .toList(),
                         onChanged: (value) => setState(() => paymentMode = value),
                       ),
                     ],
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
+                    const SizedBox(height: 12),
+                    AppDropdown<String>(
                       value: hasSelectionInList ? selectedCategoryId : null,
-                      decoration: const InputDecoration(labelText: 'Category'),
-                      isExpanded: true,
+                      labelText: 'Category',
+                      hint: 'Select Category',
                       items: [
-                        ...categories.map(
-                          (cat) => DropdownMenuItem(
-                            value: cat.id,
-                            child: Text(cat.name),
-                          ),
-                        ),
-                        const DropdownMenuItem(
-                          value: '_custom',
-                          child: Text('Custom...'),
-                        ),
+                        ...categories.map((cat) => AppDropdownItem(value: cat.id, text: cat.name)),
+                        const AppDropdownItem(value: '_custom', text: 'Custom...'),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -175,12 +163,6 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
                           }
                         });
                       },
-                      validator: (_) {
-                        if (!customCategory && (selectedCategoryId == null || selectedCategoryId!.isEmpty)) {
-                          return 'Pick a category';
-                        }
-                        return null;
-                      },
                     ),
                     if (customCategory)
                       Padding(
@@ -193,12 +175,12 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
                         ),
                       ),
                     const SizedBox(height: 12),
-                    if (type != TransactionType.income)
+                    if (type != TransactionType.income && type != TransactionType.transfer)
                       TextFormField(
                         controller: fromAccountController,
                         decoration: const InputDecoration(labelText: 'From account'),
                       ),
-                    if (type != TransactionType.expense)
+                    if (type != TransactionType.expense && type != TransactionType.transfer)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: TextFormField(
@@ -206,7 +188,39 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
                           decoration: const InputDecoration(labelText: 'To account'),
                         ),
                       ),
-                    const SizedBox(height: 12),
+                    if (type == TransactionType.transfer) ...[
+                      const SizedBox(height: 12),
+                      AppDropdown<String>(
+                        value: fromAccountController.text.isNotEmpty ? fromAccountController.text : null,
+                        labelText: 'From Account',
+                        hint: 'Select Account',
+                        items: ['Cash', 'Bank', 'Card']
+                            .map((e) => AppDropdownItem(value: e, text: e))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            fromAccountController.text = value;
+                            setState(() {});
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      AppDropdown<String>(
+                        value: toAccountController.text.isNotEmpty ? toAccountController.text : null,
+                        labelText: 'To Account',
+                        hint: 'Select Account',
+                        items: ['Cash', 'Bank', 'Card']
+                            .map((e) => AppDropdownItem(value: e, text: e))
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            toAccountController.text = value;
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 8),
                     TextFormField(
                       controller: noteController,
                       maxLines: 2,
@@ -270,6 +284,12 @@ class _AddEditTransactionScreenState extends ConsumerState<AddEditTransactionScr
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!customCategory && (selectedCategoryId == null || selectedCategoryId!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category')),
+      );
+      return;
+    }
     final resolvedCategory = _resolvedCategoryId();
     if (resolvedCategory != null) {
       _persistCategory(resolvedCategory, type != TransactionType.income);

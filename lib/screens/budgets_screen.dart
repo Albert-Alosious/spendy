@@ -15,6 +15,7 @@ import '../utils/formatters.dart';
 import '../utils/date_utils.dart';
 import '../utils/default_categories.dart';
 import '../widgets/budget_progress.dart';
+import '../widgets/app_dropdown.dart';
 
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
@@ -226,23 +227,19 @@ class BudgetsScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
+                const SizedBox(height: 12),
+                AppDropdown<String>(
                   value: selectedCategoryId,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  isExpanded: true,
+                  labelText: 'Category',
                   items: categories
-                      .map(
-                        (cat) => DropdownMenuItem(
-                          value: cat.id,
-                          child: Text(cat.name),
-                        ),
-                      )
+                      .map((cat) => AppDropdownItem(value: cat.id, text: cat.name))
                       .toList(),
                   onChanged: (value) {
                     selectedCategoryId = value;
                     categoryController.text = value ?? '';
+                    // Trigger rebuild to update UI
+                    (context as Element).markNeedsBuild();
                   },
-                  validator: (value) => (value == null || value.isEmpty) ? 'Pick a category' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -272,6 +269,12 @@ class BudgetsScreen extends ConsumerWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (!formKey.currentState!.validate()) return;
+                      if (selectedCategoryId == null || selectedCategoryId!.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please select a category')),
+                        );
+                        return;
+                      }
                       final txns = ref.read(transactionRepositoryProvider).all;
                       final month = budget?.month ?? monthKey(DateTime.now());
                       final computedSpent = txns

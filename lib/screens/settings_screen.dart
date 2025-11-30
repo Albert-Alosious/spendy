@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/payment_mode.dart';
 import '../providers/repository_providers.dart';
 import '../providers/setting_provider.dart';
+import '../widgets/app_dropdown.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -76,29 +77,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onPressed: () => _editReminderDays(context, settings.debtReminderDays),
             ),
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Default payment mode'),
-            subtitle: Text(settings.defaultPaymentMode?.displayName ?? 'None'),
-            trailing: DropdownButtonHideUnderline(
-              child: DropdownButton<PaymentMode>(
-                value: settings.defaultPaymentMode,
-                icon: const Icon(Icons.arrow_drop_down_rounded),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('None'),
-                  ),
-                  ...PaymentMode.values.map(
-                    (mode) => DropdownMenuItem(
-                      value: mode,
-                      child: Text(mode.displayName),
-                    ),
-                  ),
-                ],
-                onChanged: (value) =>
-                    ref.read(settingProvider.notifier).updateBudgetPreferences(defaultPaymentMode: value),
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: AppDropdown<PaymentMode>(
+              value: settings.defaultPaymentMode,
+              labelText: 'Default Payment Mode',
+              hint: 'None',
+              items: [
+                const AppDropdownItem(value: null, text: 'None'),
+                ...PaymentMode.values.map((mode) => AppDropdownItem(value: mode, text: mode.displayName)),
+              ],
+              onChanged: (value) =>
+                  ref.read(settingProvider.notifier).updateBudgetPreferences(defaultPaymentMode: value),
             ),
           ),
           const Divider(),

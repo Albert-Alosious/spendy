@@ -8,6 +8,7 @@ import '../models/payment_mode.dart';
 import '../utils/default_categories.dart';
 import '../providers/category_list_provider.dart';
 import '../providers/repository_providers.dart';
+import '../widgets/app_dropdown.dart';
 import '../providers/setting_provider.dart';
 import '../providers/stream_providers.dart';
 import '../screens/add_edit_transaction_screen.dart';
@@ -173,40 +174,30 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 selected: dateRange != null,
                 onSelected: (_) => _pickRange(),
               ),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<PaymentMode>(
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: AppDropdown<PaymentMode>(
                   value: paymentModeFilter,
-                  hint: const Text('Payment Mode'),
+                  hint: 'Payment Mode',
                   items: [
-                    const DropdownMenuItem<PaymentMode>(
-                      value: null,
-                      child: Text('All Modes'),
-                    ),
-                    ...PaymentMode.values.map(
-                      (mode) => DropdownMenuItem(
-                        value: mode,
-                        child: Text(mode.displayName),
-                      ),
-                    ),
+                    const AppDropdownItem(value: null, text: 'All Modes'),
+                    ...PaymentMode.values.map((mode) => AppDropdownItem(value: mode, text: mode.displayName)),
                   ],
                   onChanged: (value) => setState(() => paymentModeFilter = value),
                 ),
               ),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
+              const SizedBox(width: 12),
+              Expanded(
+                child: AppDropdown<String>(
                   value: selectedCategoryId,
-                  hint: const Text('Category'),
+                  hint: 'Category',
                   items: [
-                    const DropdownMenuItem<String>(
-                      value: null,
-                      child: Text('All categories'),
-                    ),
-                    ...categories.map(
-                      (cat) => DropdownMenuItem(
-                        value: cat.id,
-                        child: Text(cat.name),
-                      ),
-                    ),
+                    const AppDropdownItem(value: null, text: 'All Categories'),
+                    ...categories.map((cat) => AppDropdownItem(value: cat.id, text: cat.name)),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -216,16 +207,22 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   },
                 ),
               ),
-              FilterChip(
-                label: Text(accountFilter.isEmpty ? 'Account' : accountFilter),
-                selected: accountFilter.isNotEmpty,
-                onSelected: (_) => _promptText('Filter by account', (value) => setState(() => accountFilter = value)),
-              ),
-              TextButton(onPressed: _resetFilters, child: const Text('Clear')),
             ],
           ),
-        ],
-      ),
+              Row(
+                children: [
+                  FilterChip(
+                    label: Text(accountFilter.isEmpty ? 'Account' : accountFilter),
+                    selected: accountFilter.isNotEmpty,
+                    onSelected: (_) =>
+                        _promptText('Filter by account', (value) => setState(() => accountFilter = value)),
+                  ),
+                  const Spacer(),
+                  TextButton(onPressed: _resetFilters, child: const Text('Clear')),
+                ],
+              ),
+            ],
+          ),
     );
   }
 
